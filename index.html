@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dirección de Ingeniería de Concursos y Costos de Construcción</title>
+
+  <style>
+    :root{
+      --vino: #691c32;
+      --vino-2: #96606f;
+
+      --borde: rgba(255,255,255,.22);
+      --borde-hover: rgba(255,255,255,.34);
+
+      --card-bg: rgba(255,255,255,.06);
+      --card-bg-hover: rgba(255,255,255,.10);
+
+      --texto: #ffffff;
+      --muted: rgba(255,255,255,.78);
+
+      --sombra: 0 18px 45px rgba(0,0,0,.32);
+      --sombra-card: 0 8px 22px rgba(0,0,0,.18);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--vino);
+      color: var(--texto);
+    }
+
+    .page{
+      min-height: 100vh;
+      padding: 34px 18px 46px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .wrap{
+      width: min(980px, 100%);
+      text-align:center;
+    }
+
+    .title{
+      margin: 0 auto 18px;
+      padding: 18px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--borde);
+      background: rgba(0,0,0,.10);
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+      text-align: left;
+    }
+
+    .title h1{
+      margin: 0;
+      font-size: clamp(18px, 2.6vw, 26px);
+      letter-spacing: .5px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .title p{
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* =======================
+       ✅ NUEVA MAQUETACIÓN
+       Director centrado (1 col)
+       Luego 2x2 subdirectores
+    ======================= */
+
+    .grid-director{
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr;
+      justify-items: center;    /* centra horizontal */
+      gap: 14px;
+    }
+
+    .director-card{
+      width: min(560px, 100%);  /* para que quede “solo” centrado y no tan ancho */
+    }
+
+    .grid-sub{
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start; /* alineación vertical consistente */
+    }
+
+    @media (max-width: 720px){
+      .title{ text-align:center; }
+      .title p{ text-align:center; }
+
+      .grid-sub{
+        grid-template-columns: 1fr; /* en móvil: uno debajo del otro */
+      }
+
+      .director-card{
+        width: 100%; /* en móvil: ocupa todo */
+      }
+    }
+
+    .card-wrap{
+      position: relative;
+      text-align: left;
+    }
+
+    /* ✅ La tarjeta ES botón */
+    .card{
+      width: 100%;
+      text-align: left;
+      background: var(--card-bg);
+      border: 1px solid var(--borde);
+      border-radius: 16px;
+      padding: 16px 16px;
+      color: var(--texto);
+      cursor: pointer;
+      box-shadow: var(--sombra-card);
+      transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+      outline: none;
+      display: block;
+    }
+
+    .card:hover{
+      transform: translateY(-2px);
+      background: var(--card-bg-hover);
+      border-color: var(--borde-hover);
+      box-shadow: 0 14px 32px rgba(0,0,0,.25);
+    }
+
+    .card:focus-visible{
+      outline: 3px solid rgba(250, 204, 107, .75);
+      outline-offset: 2px;
+    }
+
+    .role{
+      font-size: 12px;
+      letter-spacing: .8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.88);
+      margin-bottom: 8px;
+    }
+
+    .name{
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.15;
+      color: #fff;
+      margin: 0;
+      word-break: break-word;
+    }
+
+    .hint{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.70);
+    }
+
+    /* ✅ Panel desplegable debajo (no tapa nada) */
+    .popover{
+      position: static;
+      width: 100%;
+      margin-top: 10px;
+
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: rgba(15, 10, 12, .88);
+      backdrop-filter: blur(6px);
+      box-shadow: var(--sombra);
+
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      padding: 0 14px;
+
+      transition:
+        max-height .20s ease,
+        opacity .18s ease,
+        padding .18s ease;
+    }
+
+    .card-wrap.is-open .popover{
+      opacity: 1;
+      max-height: 520px;
+      padding: 14px 14px 12px;
+    }
+
+    .pop-title{
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: .7px;
+      color: rgba(255,255,255,.92);
+      margin: 0 0 8px;
+    }
+
+    .pop-block{
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 10px 10px;
+      background: rgba(255,255,255,.04);
+      margin-bottom: 10px;
+    }
+
+    .pop-label{
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.92);
+      margin: 0 0 8px;
+    }
+
+    .pop-lines{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.35;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    .footer-note{
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,.72);
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <div class="wrap">
+      <header class="title">
+        <h1>Dirección de Ingeniería de Concursos y Costos de Construcción</h1>
+        
+      </header>
+
+      <!-- ✅ Director centrado solo -->
+      <section class="grid-director" aria-label="Director">
+        <div class="card-wrap director-card">
+          <button class="card" type="button" aria-expanded="false">
+            <div class="role">Director</div>
+            <p class="name">Nombre completo largo aquí</p>
+            <div class="hint">Click para ver detalles</div>
+          </button>
+
+          <div class="popover" role="region" aria-label="Detalle Director">
+            <div class="pop-title">Detalle</div>
+
+            <div class="pop-block">
+              <div class="pop-label">Formalizado</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+
+            <div class="pop-block" style="margin-bottom:0;">
+              <div class="pop-label">En proceso</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ✅ Subdirectores en 2 filas (A-B) y (C-D) -->
+      <section class="grid-sub" aria-label="Subdirectores">
+        <!-- Subdirector A -->
+        <div class="card-wrap">
+          <button class="card" type="button" aria-expanded="false">
+            <div class="role">Subdirector A</div>
+            <p class="name">Nombre completo largo aquí</p>
+            <div class="hint">Click para ver detalles</div>
+          </button>
+
+          <div class="popover" role="region" aria-label="Detalle Subdirector A">
+            <div class="pop-title">Detalle</div>
+
+            <div class="pop-block">
+              <div class="pop-label">Formalizado</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+
+            <div class="pop-block" style="margin-bottom:0;">
+              <div class="pop-label">En proceso</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subdirector B -->
+        <div class="card-wrap">
+          <button class="card" type="button" aria-expanded="false">
+            <div class="role">Subdirector B</div>
+            <p class="name">Nombre completo largo aquí</p>
+            <div class="hint">Click para ver detalles</div>
+          </button>
+
+          <div class="popover" role="region" aria-label="Detalle Subdirector B">
+            <div class="pop-title">Detalle</div>
+
+            <div class="pop-block">
+              <div class="pop-label">Formalizado</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+
+            <div class="pop-block" style="margin-bottom:0;">
+              <div class="pop-label">En proceso</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subdirector C -->
+        <div class="card-wrap">
+          <button class="card" type="button" aria-expanded="false">
+            <div class="role">Subdirector C</div>
+            <p class="name">Nombre completo largo aquí</p>
+            <div class="hint">Click para ver detalles</div>
+          </button>
+
+          <div class="popover" role="region" aria-label="Detalle Subdirector C">
+            <div class="pop-title">Detalle</div>
+
+            <div class="pop-block">
+              <div class="pop-label">Formalizado</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+
+            <div class="pop-block" style="margin-bottom:0;">
+              <div class="pop-label">En proceso</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subdirector D -->
+        <div class="card-wrap">
+          <button class="card" type="button" aria-expanded="false">
+            <div class="role">Subdirector D</div>
+            <p class="name">Nombre completo largo aquí</p>
+            <div class="hint">Click para ver detalles</div>
+          </button>
+
+          <div class="popover" role="region" aria-label="Detalle Subdirector D">
+            <div class="pop-title">Detalle</div>
+
+            <div class="pop-block">
+              <div class="pop-label">Formalizado</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+
+            <div class="pop-block" style="margin-bottom:0;">
+              <div class="pop-label">En proceso</div>
+              <pre class="pop-lines">XXXX
+XXXX
+XXXX</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    // ✅ Click-to-toggle + cerrar al dar click fuera + ESC
+    const wraps = Array.from(document.querySelectorAll('.card-wrap'));
+
+    function closeAll(){
+      wraps.forEach(w => {
+        w.classList.remove('is-open');
+        const btn = w.querySelector('button.card');
+        if (btn) btn.setAttribute('aria-expanded','false');
+      });
+    }
+
+    wraps.forEach(w => {
+      const btn = w.querySelector('button.card');
+      const pop = w.querySelector('.popover');
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = w.classList.contains('is-open');
+        closeAll();
+        if (!isOpen){
+          w.classList.add('is-open');
+          btn.setAttribute('aria-expanded','true');
+          setTimeout(() => pop.scrollIntoView({ behavior:'smooth', block:'nearest' }), 120);
+        }
+      });
+
+      pop.addEventListener('click', (e) => e.stopPropagation());
+    });
+
+    document.addEventListener('click', () => closeAll());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAll();
+    });
+  </script>
+</body>
+</html>
