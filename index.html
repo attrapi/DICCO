@@ -249,33 +249,180 @@
     .acc-panel-inner { /* sin overflow hidden aquí */ }
 
     /* contenido interior */
-    .acc-body {
-      padding: 16px 18px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .acc-body { padding: 16px 18px 18px; }
 
-    /* ── Faceta ── */
-    .facet-label {
+    /* ══ Árbol horizontal de facetas ══ */
+
+    /* Cima del árbol: nodo + brazos */
+    .facet-tree-top {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 7px;
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted2);
-      margin-bottom: 9px;
+      justify-content: center;
+      height: 20px;
+      margin-bottom: 0;
     }
-    .facet-label::after {
+    /* línea horizontal de brazo a brazo */
+    .facet-tree-top::before {
       content: '';
-      flex: 1;
+      position: absolute;
+      top: 50%; left: 25%; right: 25%;
       height: 1px;
-      background: rgba(255,255,255,.09);
+      transform: translateY(-50%);
+      background: linear-gradient(90deg,
+        rgba(52,211,153,.45) 0%,
+        rgba(255,255,255,.18) 50%,
+        rgba(96,165,250,.45) 100%);
+    }
+    /* nodo diamante dorado */
+    .facet-tree-node {
+      position: relative;
+      z-index: 2;
+      width: 12px; height: 12px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #f7d98b 0%, #c9922a 60%, #a07020 100%);
+      transform: rotate(45deg);
+      box-shadow: 0 0 10px rgba(201,146,42,.65), 0 0 24px rgba(201,146,42,.22);
     }
 
+    /* columnas */
+    .facet-tree-cols {
+      display: flex;
+      gap: 10px;
+    }
+    .facet {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* stub vertical desde el brazo hasta el badge */
+    .facet-stub {
+      width: 1px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+    .facet--proceso  .facet-stub { background: rgba(52,211,153,.35); }
+    .facet--formalizado .facet-stub { background: rgba(96,165,250,.35); }
+
+    /* ── Badge / botón ── */
+    .facet-label { /* centering done by parent align-items:center */ }
+    .facet-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px 4px 8px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      background: none;
+      border: 1px solid transparent;
+      outline: none;
+      user-select: none;
+      transition: filter .16s, transform .12s, box-shadow .16s;
+    }
+    .facet-badge:hover  { filter: brightness(1.14); }
+    .facet-badge:active { transform: scale(.96); }
+    .facet-badge.is-open { filter: brightness(1.08); }
+    .facet-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* En proceso → verde */
+    .facet-badge.proceso {
+      background: rgba(52,211,153,.10);
+      border-color: rgba(52,211,153,.30);
+      color: #6ee7b7;
+    }
+    .facet-badge.proceso::before  { background: #34d399; box-shadow: 0 0 5px rgba(52,211,153,.75); }
+    .facet-badge.proceso.is-open  { background: rgba(52,211,153,.18); box-shadow: 0 0 12px rgba(52,211,153,.15); }
+
+    /* Formalizado → azul */
+    .facet-badge.formalizado {
+      background: rgba(96,165,250,.12);
+      border-color: rgba(96,165,250,.30);
+      color: #93c5fd;
+    }
+    .facet-badge.formalizado span      { color: #93c5fd; -webkit-text-fill-color: #93c5fd; }
+    .facet-badge.formalizado::before   { background: #60a5fa; box-shadow: 0 0 5px rgba(96,165,250,.75); }
+    .facet-badge.formalizado.is-open   { background: rgba(96,165,250,.20); box-shadow: 0 0 12px rgba(96,165,250,.15); }
+
+    /* contador */
+    .facet-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 17px; height: 15px; padding: 0 4px;
+      border-radius: 20px; font-size: 9px; font-weight: 900; line-height: 1;
+      background: rgba(255,255,255,.14); color: #fff;
+    }
+
+    /* chevron */
+    .facet-badge-chevron {
+      width: 11px; height: 11px; flex-shrink: 0; opacity: .60;
+      transition: transform .30s var(--ease);
+    }
+    .facet-badge.is-open .facet-badge-chevron { transform: rotate(90deg); }
+
+    /* panel acordeón de faceta */
+    .facet-panel {
+      overflow: hidden;
+      max-height: 0;
+      width: 100%;
+      transition: max-height .34s var(--ease);
+    }
+    .facet-panel-inner { padding-top: 10px; }
+
+    /* lista de tarjetas */
     .facet-items { display: flex; flex-direction: column; gap: 8px; }
+
+    /* animación escalonada al abrir */
+    @keyframes procIn {
+      from { opacity: 0; transform: translateY(-8px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+    .facet.facet-open .proc-card { animation: procIn .22s var(--ease) both; }
+    .facet.facet-open .proc-card:nth-child(1) { animation-delay: .00s; }
+    .facet.facet-open .proc-card:nth-child(2) { animation-delay: .05s; }
+    .facet.facet-open .proc-card:nth-child(3) { animation-delay: .10s; }
+    .facet.facet-open .proc-card:nth-child(4) { animation-delay: .15s; }
+    .facet.facet-open .proc-card:nth-child(5) { animation-delay: .20s; }
+    .facet.facet-open .proc-card:nth-child(6) { animation-delay: .25s; }
+    .facet.facet-open .proc-card:nth-child(7) { animation-delay: .30s; }
+    .facet.facet-open .proc-card:nth-child(8) { animation-delay: .35s; }
+    .facet.facet-open .proc-empty            { animation: procIn .20s var(--ease) both; }
+
+    /* mobile: columnas apiladas */
+    @media (max-width: 500px) {
+      .facet-tree-cols { flex-direction: column; }
+      .facet { align-items: flex-start; }
+      .facet-stub { margin-left: 14px; }
+      .facet-tree-top::before { display: none; }
+    }
+
+    /* fila de metadato (fecha, etc.) */
+    .proc-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 7px;
+    }
+    .proc-meta-icon { width: 13px; height: 13px; flex-shrink: 0; opacity: .45; }
+    .proc-meta {
+      font-size: 10.5px;
+      color: rgba(255,255,255,.58);
+      letter-spacing: .3px;
+    }
+    .proc-meta strong {
+      color: rgba(255,255,255,.80);
+      font-weight: 700;
+    }
 
     /* placeholder */
     .proc-empty {
@@ -384,14 +531,14 @@
               <div class="acc-body">
 
                 <div class="facet">
-                  <div class="facet-label">En proceso</div>
+                  <div class="facet-label"><span class="facet-badge proceso">En proceso</span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
                 </div>
 
                 <div class="facet">
-                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-label"><span class="facet-badge formalizado"><span>Formalizado</span></span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
@@ -422,14 +569,62 @@
               <div class="acc-body">
 
                 <div class="facet">
-                  <div class="facet-label">En proceso</div>
+                  <div class="facet-label"><span class="facet-badge proceso">En proceso</span></div>
                   <div class="facet-items">
-                    <div class="proc-empty">Sin procesos registrados</div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 8.854 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmento 15 "A1", Zona Metropolitana de Monterrey
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/dceebd388b1e4030a69caf5d029e5c1e/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-3-2026
+                        </a>
+                      </div>
+                      <div class="proc-meta-row">
+                        <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                          <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span class="proc-meta"><strong>Fecha y hora del acto del Fallo:</strong> 11/03/2026 17:00</span>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de los Sistemas Ferroviarios, que consiste en el Diseño, Suministro, Instalación y Puesta en Marcha de los Sistemas de Señalización Ferroviaria, Telecomunicaciones y Control para el Proyecto de Tren de Pasajeros Saltillo – Nuevo Laredo
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/bc05796173114af586aeecc40aacde04/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-9-2026
+                        </a>
+                      </div>
+                      <div class="proc-meta-row">
+                        <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                          <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span class="proc-meta"><strong>Fecha y hora del acto del Fallo:</strong> 13/04/2026 17:00</span>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
                 <div class="facet">
-                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-label"><span class="facet-badge formalizado"><span>Formalizado</span></span></div>
                   <div class="facet-items">
 
                     <div class="proc-card">
@@ -500,6 +695,91 @@
                       </div>
                     </div>
 
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 136.48 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmentos 18, 19 y 20, Arroyo el Sauz – Nuevo Laredo
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/31f75f6d7b0943eb8ec53276f5d7ae72/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-32-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento para la Construcción y Diseño de 136.28 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmentos 18, 19 y 20, Arroyo el Sauz – Nuevo Laredo
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/df75657ea0824fd4a8f099e74ee12b7c/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-31-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 30.75 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmento 15 "B" Zona Metropolitana de Monterrey
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/e3e31ed6788242a79d7ea4d09471cfff/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-61-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento para la Construcción y Diseño de 30.75 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmento 15 "B", Zona Metropolitana de Monterrey
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/df75657ea0824fd4a8f099e74ee12b7c/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-50-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento para la Construcción y Diseño de 8.854 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmento 15 "A1", Zona Metropolitana de Monterrey
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/7442be100734467fb22e9305c39b3395/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-6-2026
+                        </a>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
@@ -524,16 +804,186 @@
               <div class="acc-body">
 
                 <div class="facet">
-                  <div class="facet-label">En proceso</div>
+                  <div class="facet-label"><span class="facet-badge proceso">En proceso</span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
                 </div>
 
                 <div class="facet">
-                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-label"><span class="facet-badge formalizado"><span>Formalizado</span></span></div>
                   <div class="facet-items">
-                    <div class="proc-empty">Sin procesos registrados</div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 30.70 km del Tramo I Ferroviario del Tren de Pasajeros Querétaro-Irapuato, Tramo: Apaseo el Grande Zona Industrial – Querétaro Zona Industrial, Subtramo del km 5+600 al km 36+300. Incluye la Construcción de Viaductos.
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/c312d90c06df46938fb9f8ec7407be8f/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-13-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento para la Construcción de 30.70 km del Tramo I Ferroviario del Tren de Pasajeros Querétaro-Irapuato, Tramo: Apaseo el Grande Zona Industrial-Querétaro Zona Industrial, Sub Tramo del km 5+600 al km 36+300. Incluye la Construcción de Viaductos.
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/5aea049575f6495384629c0973afa13a/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-12-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 70.70 km del Tramo II Ferroviario del Tren de Pasajeros Querétaro - Irapuato, Tramo: Apaseo el Grande Zona Industrial a Irapuato, Subtramo del km. 36+300 al 107+000, Incluye la Construcción de Viaductos.
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/ca335f83ef3047008955f715f8579e7b/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-27-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento de la Construcción y Diseño de 70.70 km del Tramo II Ferroviario del Tren de Pasajeros Querétaro - Irapuato, Tramo: Apaseo el Grande Zona Industrial a Irapuato, Subtramo del km. 36+300 al 107+000, Incluye la Construcción de Viaductos.
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/7b85a2616b454162b3185fb12e748a77/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-30-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento de la Construcción y Diseño de 1.2 km del Tramo III Ferroviario del Tren de Pasajeros Querétaro-Irapuato del km 107+000 al km 108+200, incluye Estaciones ubicadas en Apaseo el Grande, Celaya, Cortázar, Salamanca e Irapuato, así como la Rectificación de la Playa de Vías de la Estación de Pasajeros existente en Irapuato y Reconfiguración del Patio de Carga hasta su Operación Efectiva y Operativa de ambas
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/11137449217240a8b94a7007a2e21286/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-49-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 1.2 km del Tramo III Ferroviario del Tren de Pasajeros Querétaro-Irapuato del km 107+000 al km 108+200, incluye Estaciones ubicadas en Apaseo el Grande, Celaya, Cortázar, Salamanca e Irapuato, así como la Rectificación de la Playa de Vías de la Estación de Pasajeros existente en Irapuato y Reconfiguración del Patio de Carga hasta su Operación Efectiva y Operativa de ambas
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/9b1aaa212520478d99002da23ed787ab/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-55-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de Cuatro Edificios Auxiliares correspondientes a Zonas de Repostaje, Talleres y Cocheras, y Base de Mantenimiento, ubicados en el Tramo del Tren de Pasajeros Querétaro – Irapuato
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/b025bddf140d4cf09018a87c6de18468/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-1-2026
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de los Sistemas Ferroviarios, que consiste en el Diseño, Suministro, Instalación y Puesta en Marcha de los Sistemas de Señalización Ferroviaria, Telecomunicaciones y Control para los Proyectos Trenes de Pasajeros México - Querétaro y Querétaro - Irapuato
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/6ff0330739b3447b8f600032be84af1d/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-77-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento de la Construcción y Diseño de Cuatro Edificios Auxiliares correspondientes a Zonas de Repostaje, Talleres y Cocheras, y Base de Mantenimiento, ubicados en el Tramo del Tren de Pasajeros Querétaro - Irapuato
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/0f868ad2b17d4286afc47a944fbef5cd/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-2-2026
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Prestación de Servicios de Asesoría Técnica Especializada orientada al Análisis de Insumos Técnicos en la Interacción de Proyectos Ferroviarios de Carga y de Pasajeros en el Tramo 0+000 al 108.20+000 Querétaro – Irapuato
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/a7bd0fccb9434e8a9a04a55c0e6610a7/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          IO-09-D00-009D00999-N-14-2026
+                        </a>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
@@ -558,14 +1008,14 @@
               <div class="acc-body">
 
                 <div class="facet">
-                  <div class="facet-label">En proceso</div>
+                  <div class="facet-label"><span class="facet-badge proceso">En proceso</span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
                 </div>
 
                 <div class="facet">
-                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-label"><span class="facet-badge formalizado"><span>Formalizado</span></span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
@@ -592,14 +1042,14 @@
               <div class="acc-body">
 
                 <div class="facet">
-                  <div class="facet-label">En proceso</div>
+                  <div class="facet-label"><span class="facet-badge proceso">En proceso</span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
                 </div>
 
                 <div class="facet">
-                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-label"><span class="facet-badge formalizado"><span>Formalizado</span></span></div>
                   <div class="facet-items">
                     <div class="proc-empty">Sin procesos registrados</div>
                   </div>
@@ -619,9 +1069,11 @@
 
     function closeAcc(a) {
       const panel = a.querySelector('.acc-panel');
-      // Si está abierto sin valor de píxeles, medimos antes de cerrar
       if (!panel.style.maxHeight || panel.style.maxHeight === '0px') return;
-      panel.style.maxHeight = panel.scrollHeight + 'px';
+      // Si el panel estaba en 'none' (por faceta abierta), medimos antes de animar
+      if (panel.style.maxHeight === 'none') {
+        panel.style.maxHeight = panel.scrollHeight + 'px';
+      }
       requestAnimationFrame(() => { panel.style.maxHeight = '0'; });
       a.classList.remove('is-open');
       a.querySelector('.acc-trigger').setAttribute('aria-expanded', 'false');
@@ -644,13 +1096,95 @@
       const trigger = acc.querySelector('.acc-trigger');
       trigger.addEventListener('click', () => {
         const isOpen = acc.classList.contains('is-open');
-        closeAll(acc);
         isOpen ? closeAcc(acc) : openAcc(acc);
       });
     });
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') closeAll(null);
+    });
+
+    // Abrir subdirectores A, B, C, D al cargar (no el director)
+    ['acc-a', 'acc-b', 'acc-c', 'acc-d'].forEach(id => {
+      const acc = document.getElementById(id);
+      if (acc) openAcc(acc);
+    });
+
+    // ── Árbol horizontal + acordeón de facetas ──
+    document.querySelectorAll('.acc-body').forEach(body => {
+      const facets = Array.from(body.querySelectorAll(':scope > .facet'));
+
+      // Cima: nodo diamante con brazos
+      const top = document.createElement('div');
+      top.className = 'facet-tree-top';
+      const node = document.createElement('div');
+      node.className = 'facet-tree-node';
+      top.appendChild(node);
+
+      // Columnas
+      const cols = document.createElement('div');
+      cols.className = 'facet-tree-cols';
+
+      facets.forEach(facet => {
+        const badge   = facet.querySelector('.facet-badge');
+        const items   = facet.querySelector('.facet-items');
+        const isProceso = badge && badge.classList.contains('proceso');
+
+        facet.classList.add(isProceso ? 'facet--proceso' : 'facet--formalizado');
+
+        // Stub vertical (brazo → badge)
+        const stub = document.createElement('div');
+        stub.className = 'facet-stub';
+        facet.insertBefore(stub, facet.firstChild);
+
+        // Envolver items en panel
+        const panel = document.createElement('div');
+        panel.className = 'facet-panel';
+        const inner = document.createElement('div');
+        inner.className = 'facet-panel-inner';
+        inner.appendChild(items);
+        panel.appendChild(inner);
+        facet.appendChild(panel);
+
+        if (badge) {
+          // Contador
+          const count = items.querySelectorAll('.proc-card').length;
+          const counter = document.createElement('span');
+          counter.className = 'facet-count';
+          counter.textContent = count;
+          badge.appendChild(counter);
+
+          // Chevron
+          const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+          svg.setAttribute('viewBox','0 0 24 24');
+          svg.setAttribute('fill','none');
+          svg.classList.add('facet-badge-chevron');
+          const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+          p.setAttribute('d','M9 18l6-6-6-6');
+          p.setAttribute('stroke','currentColor');
+          p.setAttribute('stroke-width','2.2');
+          p.setAttribute('stroke-linecap','round');
+          p.setAttribute('stroke-linejoin','round');
+          svg.appendChild(p);
+          badge.appendChild(svg);
+
+          badge.addEventListener('click', () => {
+            const isOpen = facet.classList.contains('facet-open');
+            facet.classList.toggle('facet-open', !isOpen);
+            badge.classList.toggle('is-open', !isOpen);
+            panel.style.maxHeight = isOpen ? '0' : inner.scrollHeight + 'px';
+
+            // Liberar el panel padre para que nunca recorte el contenido expandido
+            const accPanel = body.closest('.acc-panel');
+            if (accPanel) accPanel.style.maxHeight = 'none';
+          });
+        }
+
+        cols.appendChild(facet);
+      });
+
+      body.appendChild(top);
+      body.appendChild(cols);
     });
   </script>
 
