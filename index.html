@@ -7,489 +7,652 @@
   <title>Dirección de Ingeniería de Concursos y Costos de Construcción</title>
 
   <style>
-    :root{
-      --vino: #691c32;
-      --vino-2: #96606f;
-
-      --borde: rgba(255,255,255,.22);
-      --borde-hover: rgba(255,255,255,.34);
-
-      --card-bg: rgba(255,255,255,.06);
-      --card-bg-hover: rgba(255,255,255,.10);
-
-      --texto: #ffffff;
-      --muted: rgba(255,255,255,.78);
-
-      --sombra: 0 18px 45px rgba(0,0,0,.32);
-      --sombra-card: 0 8px 22px rgba(0,0,0,.18);
+    :root {
+      --vino:       #691c32;
+      --accent:     #c9922a;
+      --gold-1:     #f0c050;
+      --gold-2:     #c9922a;
+      --gold-3:     #f7d98b;
+      --gold-grad:  linear-gradient(135deg, #f7d98b 0%, #c9922a 40%, #f0c050 65%, #a07020 100%);
+      --borde:      rgba(255,255,255,.16);
+      --card-bg:    rgba(255,255,255,.055);
+      --texto:      #ffffff;
+      --muted:      rgba(255,255,255,.68);
+      --muted2:     rgba(255,255,255,.38);
+      --ease:       cubic-bezier(.4,0,.2,1);
     }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      scroll-behavior: smooth;
+      scrollbar-gutter: stable; /* reserva espacio al scrollbar siempre — evita el salto de layout */
+      overflow-y: scroll;       /* fallback para navegadores sin soporte de scrollbar-gutter */
+    }
+
+    body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: var(--vino);
       color: var(--texto);
-    }
-
-    .page{
       min-height: 100vh;
-      padding: 34px 18px 46px;
-      display:flex;
-      justify-content:center;
     }
 
-    .wrap{
-      width: min(1080px, 100%);
-      text-align:center;
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 5%,  rgba(160,45,65,.40) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 50% at 85% 95%, rgba(60,5,18,.55)   0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
     }
 
-    .title{
-      margin: 0 auto 18px;
-      padding: 18px 18px;
-      border-radius: 14px;
-      border: 1px solid var(--borde);
-      background: rgba(0,0,0,.10);
-      box-shadow: 0 10px 30px rgba(0,0,0,.18);
-      text-align: left;
-    }
-
-    .title h1{
-      margin: 0;
-      font-size: clamp(18px, 2.6vw, 26px);
-      letter-spacing: .5px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-    .title p{
-      margin: 8px 0 0;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-
-    /* =======================
-       ✅ NUEVA MAQUETACIÓN
-       Director centrado (1 col)
-       Luego 2x2 subdirectores
-    ======================= */
-
-    .grid-director{
-      margin-top: 14px;
-      display: grid;
-      grid-template-columns: 1fr;
-      justify-items: center;    /* centra horizontal */
-      gap: 14px;
-    }
-
-    .director-card{
-      width: min(560px, 100%);  /* para que quede “solo” centrado y no tan ancho */
-    }
-
-    .grid-sub{
-      margin-top: 14px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      align-items: start; /* alineación vertical consistente */
-    }
-
-    @media (max-width: 720px){
-      .title{ text-align:center; }
-      .title p{ text-align:center; }
-
-      .grid-sub{
-        grid-template-columns: 1fr; /* en móvil: uno debajo del otro */
-      }
-
-      .director-card{
-        width: 100%; /* en móvil: ocupa todo */
-      }
-    }
-
-    .card-wrap{
-      position: relative;
-      text-align: left;
-    }
-
-    /* ✅ La tarjeta ES botón */
-    .card{
-      width: 100%;
-      text-align: center;
-      background: var(--card-bg);
-      border: 1px solid var(--borde);
-      border-radius: 16px;
-      padding: 16px 16px;
-      color: var(--texto);
-      cursor: pointer;
-      box-shadow: var(--sombra-card);
-      transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
-      outline: none;
-      display: block;
-    }
-
-    .card:hover{
-      transform: translateY(-2px);
-      background: var(--card-bg-hover);
-      border-color: var(--borde-hover);
-      box-shadow: 0 14px 32px rgba(0,0,0,.25);
-    }
-
-    .card:focus-visible{
-      outline: 3px solid rgba(250, 204, 107, .75);
-      outline-offset: 2px;
-    }
-
-    .role{
-      font-size: 12px;
-      letter-spacing: .8px;
-      font-weight: 900;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.88);
-      margin-bottom: 8px;
-    }
-
-    .name{
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1.15;
-      color: #fff;
-      margin: 0;
-      word-break: break-word;
-    }
-
-    .hint{
-      margin-top: 10px;
-      font-size: 12px;
-      color: rgba(255,255,255,.70);
-    }
-
-    /* ✅ Panel desplegable debajo (no tapa nada) */
-    .popover{
-      position: static;
-      width: 100%;
-      margin-top: 10px;
-
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.24);
-      background: rgba(15, 10, 12, .88);
-      backdrop-filter: blur(6px);
-      box-shadow: var(--sombra);
-
-      max-height: 0;
-      opacity: 0;
-      overflow: hidden;
-      padding: 0 14px;
-
-      transition:
-        max-height .20s ease,
-        opacity .18s ease,
-        padding .18s ease;
-    }
-
-    .card-wrap.is-open .popover{
-      opacity: 1;
-      max-height: 520px;
-      padding: 14px 14px 12px;
-    }
-
-    .pop-title{
-      font-weight: 900;
-      text-transform: uppercase;
-      font-size: 12px;
-      letter-spacing: .7px;
-      color: rgba(255,255,255,.92);
-      margin: 0 0 8px;
-    }
-
-    .pop-block{
-      border: 1px solid rgba(255,255,255,.16);
+    /* ── Botón regresar ── */
+    .back-btn {
+      position: fixed;
+      top: 14px; left: 14px;
+      z-index: 9999;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 14px;
       border-radius: 12px;
-      padding: 10px 10px;
-      background: rgba(255,255,255,.04);
-      margin-bottom: 10px;
-    }
-
-    .pop-label{
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .6px;
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(255,255,255,.20);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: .8px;
       text-transform: uppercase;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .back-btn:hover { background: rgba(0,0,0,.48); border-color: rgba(255,255,255,.36); transform: translateY(-1px); }
+    .back-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── Layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      padding: 36px 20px 64px;
+      display: flex;
+      justify-content: center;
+    }
+    .wrap { width: min(1100px, 100%); }
+
+    /* ── Header ── */
+    .header {
+      margin-bottom: 28px;
+      padding: 26px 28px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+    /* línea dorada superior */
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, #f7d98b 20%, #c9922a 45%, #f0c050 65%, #a07020 85%, transparent 100%);
+    }
+    .header-eyebrow {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 18px;
+      height: 2px;
+      background: var(--gold-grad);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-size: clamp(15px, 2.5vw, 23px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      line-height: 1.22;
+      color: #fff;
+    }
+    .header-divider {
+      margin: 12px 0;
+      height: 1px;
+      background: rgba(255,255,255,.09);
+    }
+    .header-sub {
+      font-size: 11.5px;
+      color: rgba(255,255,255,.55);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ── Grids ── */
+    .grid-director { display: grid; grid-template-columns: 1fr; justify-items: center; margin-bottom: 16px; }
+    .director-card { width: min(580px, 100%); }
+    .grid-sub { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: start; }
+    @media (max-width: 680px) {
+      .grid-sub { grid-template-columns: 1fr; }
+      .director-card { width: 100%; }
+    }
+
+    /* ── Tarjeta persona (acordeón) ── */
+    .acc {
+      border-radius: 18px;
+      border: 1px solid var(--borde);
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.20);
+      overflow: hidden;
+      transition: border-color .30s var(--ease), box-shadow .30s var(--ease);
+    }
+    .acc.is-open {
+      border-color: rgba(255,255,255,.28);
+      box-shadow: 0 16px 42px rgba(0,0,0,.32), 0 0 0 1px rgba(201,146,42,.18);
+    }
+
+    /* ── Trigger (cabecera clicable) ── */
+    .acc-trigger {
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--texto);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      position: relative;
+      transition: background .20s var(--ease);
+    }
+    .acc-trigger:hover  { background: rgba(255,255,255,.04); }
+    .acc.is-open .acc-trigger { background: rgba(0,0,0,.14); }
+
+    /* línea inferior solo cuando cerrado */
+    .acc-trigger::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 20px; right: 20px;
+      height: 1px;
+      background: rgba(255,255,255,.10);
+      opacity: 0;
+      transition: opacity .25s var(--ease);
+    }
+    .acc.is-open .acc-trigger::after { opacity: 1; }
+
+    .acc-info { flex: 1; min-width: 0; }
+    .acc-role {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+    }
+    .acc-name {
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 400px) { .acc-name { font-size: 13px; white-space: normal; } }
+
+    /* chevron */
+    .acc-chevron {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .22s var(--ease), border-color .22s var(--ease), transform .35s var(--ease);
+    }
+    .acc-chevron svg { width: 14px; height: 14px; transition: transform .35s var(--ease); }
+    .acc.is-open .acc-chevron {
+      background: rgba(201,146,42,.16);
+      border-color: rgba(201,146,42,.50);
+      box-shadow: 0 0 8px rgba(201,146,42,.20);
+    }
+    .acc.is-open .acc-chevron svg { transform: rotate(180deg); }
+
+    /* ── Panel acordeón ── */
+    .acc-panel {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .38s var(--ease);
+      will-change: max-height;
+    }
+
+    .acc-panel-inner { /* sin overflow hidden aquí */ }
+
+    /* contenido interior */
+    .acc-body {
+      padding: 16px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Faceta ── */
+    .facet-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 9px;
+    }
+    .facet-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,.09);
+    }
+
+    .facet-items { display: flex; flex-direction: column; gap: 8px; }
+
+    /* placeholder */
+    .proc-empty {
+      font-size: 11px;
+      color: var(--muted2);
+      font-style: italic;
+      padding: 4px 2px;
+    }
+
+    /* ── Tarjeta de proceso ── */
+    .proc-card {
+      position: relative;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,.11);
+      background: rgba(255,255,255,.04);
+      padding: 11px 13px 11px 17px;
+      overflow: hidden;
+      transition: background .16s, border-color .16s, transform .16s;
+    }
+    .proc-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #f7d98b 0%, #c9922a 50%, #a07020 100%);
+      border-radius: 11px 0 0 11px;
+      box-shadow: 1px 0 6px rgba(201,146,42,.30);
+    }
+    .proc-card:hover {
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,255,255,.20);
+      transform: translateX(2px);
+    }
+
+    .proc-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      line-height: 1.5;
       color: rgba(255,255,255,.92);
-      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: .25px;
+      margin-bottom: 9px;
     }
 
-    .pop-lines{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      color: rgba(255,255,255,.78);
-      line-height: 1.35;
-      white-space: pre-wrap;
-      margin: 0;
+    .proc-id-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .proc-id-icon { width: 13px; height: 13px; flex-shrink: 0; opacity: .50; }
+
+    .proc-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .45px;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(201,146,42,.45);
+      transition: filter .14s, border-color .14s;
+    }
+    .proc-id:hover {
+      filter: brightness(1.18) saturate(1.1);
+      border-color: rgba(247,217,139,.75);
     }
 
-    .footer-note{
-      margin-top: 14px;
-      font-size: 12px;
-      color: rgba(255,255,255,.72);
-      text-align:center;
-    }
-    /* ===== Botón regresar (fixed) ===== */
-.back-btn{
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 9999;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 10px 14px;
-  border-radius: 14px;
-
-  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(0,0,0,.12));
-  border: 1px solid rgba(255,255,255,.28);
-  box-shadow: 0 12px 26px rgba(0,0,0,.28);
-
-  color: #fff;
-  text-decoration: none;
-  font-weight: 900;
-  letter-spacing: .6px;
-  text-transform: uppercase;
-  font-size: 12px;
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-
-  transition: transform .14s ease, filter .14s ease, border-color .14s ease;
-}
-
-.back-btn:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.06);
-  border-color: rgba(255,255,255,.40);
-}
-
-.back-btn:active{
-  transform: translateY(0);
-  filter: brightness(.98);
-}
-
-/* iconito */
-.back-btn svg{
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  opacity: .95;
-}
   </style>
 </head>
 
 <body>
-  <a class="back-btn" href="https://attrapi.github.io/trenes/" aria-label="Regresar a TRENES">
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  Regresar
-</a>
+
+  <a class="back-btn" href="https://attrapi.github.io/trenes/" aria-label="Regresar">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Regresar
+  </a>
+
   <main class="page">
     <div class="wrap">
-      <header class="title">
+
+      <header class="header">
+        <div class="header-eyebrow">ATTRAPI · DICCO</div>
         <h1>Dirección de Ingeniería de Concursos y Costos de Construcción</h1>
-        
+        <div class="header-divider"></div>
+        <div class="header-sub">Procesos por área y responsable</div>
       </header>
 
-      <!-- ✅ Director centrado solo -->
+      <!-- ── Director ── -->
       <section class="grid-director" aria-label="Director">
-        <div class="card-wrap director-card">
-          <button class="card" type="button" aria-expanded="false">
-            <div class="role">Director</div>
-            <p class="name">Benjamín Gómez</p>
-            <div class="hint">Click para ver detalles</div>
-          </button>
-
-          <div class="popover" role="region" aria-label="Detalle Director">
-            <div class="pop-title">Detalle</div>
-
-            <div class="pop-block">
-              <div class="pop-label">Formalizado</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+        <div class="acc director-card" id="acc-director">
+          <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-director">
+            <div class="acc-info">
+              <div class="acc-role">Director</div>
+              <div class="acc-name">Benjamín Gómez</div>
             </div>
+            <span class="acc-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+          <div class="acc-panel" id="panel-director" role="region">
+            <div class="acc-panel-inner">
+              <div class="acc-body">
 
-            <div class="pop-block" style="margin-bottom:0;">
-              <div class="pop-label">En proceso</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+                <div class="facet">
+                  <div class="facet-label">En proceso</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+                <div class="facet">
+                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ✅ Subdirectores en 2 filas (A-B) y (C-D) -->
+      <!-- ── Subdirectores 2×2 ── -->
       <section class="grid-sub" aria-label="Subdirectores">
+
         <!-- Subdirector A -->
-        <div class="card-wrap">
-          <button class="card" type="button" aria-expanded="false">
-            <div class="role">Subdirector A</div>
-            <p class="name">José Roberto García</p>
-            <div class="hint">Click para ver detalles</div>
-          </button>
-
-          <div class="popover" role="region" aria-label="Detalle Subdirector A">
-            <div class="pop-title">Detalle</div>
-
-            <div class="pop-block">
-              <div class="pop-label">Formalizado</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+        <div class="acc" id="acc-a">
+          <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-a">
+            <div class="acc-info">
+              <div class="acc-role">Subdirector A</div>
+              <div class="acc-name">José Roberto García</div>
             </div>
+            <span class="acc-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+          <div class="acc-panel" id="panel-a" role="region">
+            <div class="acc-panel-inner">
+              <div class="acc-body">
 
-            <div class="pop-block" style="margin-bottom:0;">
-              <div class="pop-label">En proceso</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+                <div class="facet">
+                  <div class="facet-label">En proceso</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+                <div class="facet">
+                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-items">
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 111 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmentos 13 y 14, Saltillo – Santa Catarina
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/21db884a7f2d4930803bd73e2bac46f2/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-19-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento para la Construcción y Diseño de 111 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmentos 13 y 14, Saltillo – Santa Catarina
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/068ba1981e8c4a4baf31293e1f1841ce/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-18-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Construcción y Diseño de 100.05 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmentos 16 y 17 Unión San Javier – Arroyo el Sauz
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/d649ca38e9e642b2aecef86d40ed3b43/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-I-14-2025
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="proc-card">
+                      <div class="proc-title">
+                        Supervisión, Control y Seguimiento para la Construcción y Diseño de 100.05 km del Tren de Pasajeros Saltillo – Nuevo Laredo, Segmentos 16 y 17 Unión San Javier – Arroyo el Sauz
+                      </div>
+                      <div class="proc-id-row">
+                        <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <a class="proc-id"
+                           href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/7e3fd8a9a1ae4cd1be7df91a4212c5ee/procedimiento"
+                           target="_blank" rel="noopener noreferrer">
+                          LO-09-D00-009D00999-N-10-2025
+                        </a>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Subdirector B -->
-        <div class="card-wrap">
-          <button class="card" type="button" aria-expanded="false">
-            <div class="role">Subdirector B</div>
-            <p class="name">Ernesto A. Hernández Hernández</p>
-            <div class="hint">Click para ver detalles</div>
-          </button>
-
-          <div class="popover" role="region" aria-label="Detalle Subdirector B">
-            <div class="pop-title">Detalle</div>
-
-            <div class="pop-block">
-              <div class="pop-label">Formalizado</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+        <div class="acc" id="acc-b">
+          <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-b">
+            <div class="acc-info">
+              <div class="acc-role">Subdirector B</div>
+              <div class="acc-name">Ernesto A. Hernández Hernández</div>
             </div>
+            <span class="acc-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+          <div class="acc-panel" id="panel-b" role="region">
+            <div class="acc-panel-inner">
+              <div class="acc-body">
 
-            <div class="pop-block" style="margin-bottom:0;">
-              <div class="pop-label">En proceso</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+                <div class="facet">
+                  <div class="facet-label">En proceso</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+                <div class="facet">
+                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Subdirector C -->
-        <div class="card-wrap">
-          <button class="card" type="button" aria-expanded="false">
-            <div class="role">Subdirector C</div>
-            <p class="name">Raúl Sánchez Fuentes</p>
-            <div class="hint">Click para ver detalles</div>
-          </button>
-
-          <div class="popover" role="region" aria-label="Detalle Subdirector C">
-            <div class="pop-title">Detalle</div>
-
-            <div class="pop-block">
-              <div class="pop-label">Formalizado</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+        <div class="acc" id="acc-c">
+          <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-c">
+            <div class="acc-info">
+              <div class="acc-role">Subdirector C</div>
+              <div class="acc-name">Raúl Sánchez Fuentes</div>
             </div>
+            <span class="acc-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+          <div class="acc-panel" id="panel-c" role="region">
+            <div class="acc-panel-inner">
+              <div class="acc-body">
 
-            <div class="pop-block" style="margin-bottom:0;">
-              <div class="pop-label">En proceso</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+                <div class="facet">
+                  <div class="facet-label">En proceso</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+                <div class="facet">
+                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Subdirector D -->
-        <div class="card-wrap">
-          <button class="card" type="button" aria-expanded="false">
-            <div class="role">Subdirector D</div>
-            <p class="name">Mario Alberto Piñón Landero</p>
-            <div class="hint">Click para ver detalles</div>
-          </button>
-
-          <div class="popover" role="region" aria-label="Detalle Subdirector D">
-            <div class="pop-title">Detalle</div>
-
-            <div class="pop-block">
-              <div class="pop-label">Formalizado</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+        <div class="acc" id="acc-d">
+          <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-d">
+            <div class="acc-info">
+              <div class="acc-role">Subdirector D</div>
+              <div class="acc-name">Mario Alberto Piñón Landero</div>
             </div>
+            <span class="acc-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+          <div class="acc-panel" id="panel-d" role="region">
+            <div class="acc-panel-inner">
+              <div class="acc-body">
 
-            <div class="pop-block" style="margin-bottom:0;">
-              <div class="pop-label">En proceso</div>
-              <pre class="pop-lines">XXXX
-XXXX
-XXXX</pre>
+                <div class="facet">
+                  <div class="facet-label">En proceso</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+                <div class="facet">
+                  <div class="facet-label">Formalizado</div>
+                  <div class="facet-items">
+                    <div class="proc-empty">Sin procesos registrados</div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
+      </section>
     </div>
   </main>
 
   <script>
-    // ✅ Click-to-toggle + cerrar al dar click fuera + ESC
-    const wraps = Array.from(document.querySelectorAll('.card-wrap'));
+    const accs = Array.from(document.querySelectorAll('.acc'));
 
-    function closeAll(){
-      wraps.forEach(w => {
-        w.classList.remove('is-open');
-        const btn = w.querySelector('button.card');
-        if (btn) btn.setAttribute('aria-expanded','false');
-      });
+    function closeAcc(a) {
+      const panel = a.querySelector('.acc-panel');
+      // Si está abierto sin valor de píxeles, medimos antes de cerrar
+      if (!panel.style.maxHeight || panel.style.maxHeight === '0px') return;
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+      requestAnimationFrame(() => { panel.style.maxHeight = '0'; });
+      a.classList.remove('is-open');
+      a.querySelector('.acc-trigger').setAttribute('aria-expanded', 'false');
     }
 
-    wraps.forEach(w => {
-      const btn = w.querySelector('button.card');
-      const pop = w.querySelector('.popover');
+    function openAcc(a) {
+      const panel  = a.querySelector('.acc-panel');
+      const inner  = a.querySelector('.acc-panel-inner');
+      panel.style.maxHeight = inner.scrollHeight + 'px';
+      a.classList.add('is-open');
+      a.querySelector('.acc-trigger').setAttribute('aria-expanded', 'true');
+      // NO cambiamos a 'none' al terminar — evita el reflow/brinco
+    }
 
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = w.classList.contains('is-open');
-        closeAll();
-        if (!isOpen){
-          w.classList.add('is-open');
-          btn.setAttribute('aria-expanded','true');
-          setTimeout(() => pop.scrollIntoView({ behavior:'smooth', block:'nearest' }), 120);
-        }
+    function closeAll(except) {
+      accs.forEach(a => { if (a !== except) closeAcc(a); });
+    }
+
+    accs.forEach(acc => {
+      const trigger = acc.querySelector('.acc-trigger');
+      trigger.addEventListener('click', () => {
+        const isOpen = acc.classList.contains('is-open');
+        closeAll(acc);
+        isOpen ? closeAcc(acc) : openAcc(acc);
       });
-
-      pop.addEventListener('click', (e) => e.stopPropagation());
     });
 
-    document.addEventListener('click', () => closeAll());
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeAll();
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeAll(null);
     });
   </script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
