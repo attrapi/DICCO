@@ -136,17 +136,30 @@
       height: 1px;
       background: rgba(255,255,255,.09);
     }
-    .header-sub {
-      font-size: 11.5px;
-      color: rgba(255,255,255,.55);
-      letter-spacing: .4px;
+    .header-director {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .header-director-role {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
       text-transform: uppercase;
-      font-weight: 600;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-director-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: .2px;
+      line-height: 1.2;
     }
 
     /* ── Grids ── */
-    .grid-director { display: grid; grid-template-columns: 1fr; justify-items: center; margin-bottom: 16px; }
-    .director-card { width: min(580px, 100%); }
     .grid-sub { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: start; }
     @media (max-width: 680px) {
       .grid-sub { grid-template-columns: 1fr; }
@@ -251,44 +264,13 @@
     /* contenido interior */
     .acc-body { padding: 16px 18px 18px; }
 
-    /* ══ Árbol horizontal de facetas ══ */
-
-    /* Cima del árbol: nodo + brazos */
-    .facet-tree-top {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 20px;
-      margin-bottom: 0;
-    }
-    /* línea horizontal de brazo a brazo */
-    .facet-tree-top::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 25%; right: 25%;
-      height: 1px;
-      transform: translateY(-50%);
-      background: linear-gradient(90deg,
-        rgba(52,211,153,.45) 0%,
-        rgba(255,255,255,.18) 50%,
-        rgba(96,165,250,.45) 100%);
-    }
-    /* nodo diamante dorado */
-    .facet-tree-node {
-      position: relative;
-      z-index: 2;
-      width: 12px; height: 12px;
-      flex-shrink: 0;
-      background: linear-gradient(135deg, #f7d98b 0%, #c9922a 60%, #a07020 100%);
-      transform: rotate(45deg);
-      box-shadow: 0 0 10px rgba(201,146,42,.65), 0 0 24px rgba(201,146,42,.22);
-    }
-
-    /* columnas */
+    /* ══ Facetas ══ */
     .facet-tree-cols {
       display: flex;
-      gap: 10px;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      padding: 6px 0;
     }
     .facet {
       flex: 1;
@@ -297,23 +279,15 @@
       flex-direction: column;
       align-items: center;
     }
-    /* stub vertical desde el brazo hasta el badge */
-    .facet-stub {
-      width: 1px;
-      height: 14px;
-      flex-shrink: 0;
-    }
-    .facet--proceso  .facet-stub { background: rgba(52,211,153,.35); }
-    .facet--formalizado .facet-stub { background: rgba(96,165,250,.35); }
 
     /* ── Badge / botón ── */
     .facet-label { /* centering done by parent align-items:center */ }
     .facet-badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 4px 10px 4px 8px;
-      border-radius: 20px;
+      gap: 6px;
+      padding: 7px 14px 7px 11px;
+      border-radius: 24px;
       font-size: 9px;
       font-weight: 800;
       letter-spacing: 1.3px;
@@ -324,11 +298,11 @@
       border: 1px solid transparent;
       outline: none;
       user-select: none;
-      transition: filter .16s, transform .12s, box-shadow .16s;
+      transition: filter .16s, transform .14s, box-shadow .16s;
     }
-    .facet-badge:hover  { filter: brightness(1.14); }
-    .facet-badge:active { transform: scale(.96); }
-    .facet-badge.is-open { filter: brightness(1.08); }
+    .facet-badge:hover  { filter: brightness(1.16); transform: translateY(-1px); }
+    .facet-badge:active { transform: scale(.96) translateY(0); }
+    .facet-badge.is-open { filter: brightness(1.10); }
     .facet-badge::before {
       content: '';
       width: 6px; height: 6px;
@@ -337,23 +311,36 @@
     }
 
     /* En proceso → verde */
+    /* En proceso → verde */
     .facet-badge.proceso {
-      background: rgba(52,211,153,.10);
-      border-color: rgba(52,211,153,.30);
+      background: rgba(52,211,153,.09);
+      border-color: rgba(52,211,153,.24);
       color: #6ee7b7;
+      box-shadow: 0 2px 8px rgba(52,211,153,.08), 0 1px 3px rgba(0,0,0,.15);
     }
-    .facet-badge.proceso::before  { background: #34d399; box-shadow: 0 0 5px rgba(52,211,153,.75); }
-    .facet-badge.proceso.is-open  { background: rgba(52,211,153,.18); box-shadow: 0 0 12px rgba(52,211,153,.15); }
+    .facet-badge.proceso::before { background: #34d399; box-shadow: 0 0 4px rgba(52,211,153,.55); }
+    .facet-badge.proceso:hover   { box-shadow: 0 4px 12px rgba(52,211,153,.14), 0 1px 4px rgba(0,0,0,.18); }
+    .facet-badge.proceso.is-open {
+      background: rgba(52,211,153,.13);
+      border-color: rgba(52,211,153,.36);
+      box-shadow: 0 4px 14px rgba(52,211,153,.14), 0 1px 4px rgba(0,0,0,.18);
+    }
 
     /* Formalizado → azul */
     .facet-badge.formalizado {
-      background: rgba(96,165,250,.12);
-      border-color: rgba(96,165,250,.30);
+      background: rgba(96,165,250,.09);
+      border-color: rgba(96,165,250,.24);
       color: #93c5fd;
+      box-shadow: 0 2px 8px rgba(96,165,250,.08), 0 1px 3px rgba(0,0,0,.15);
     }
-    .facet-badge.formalizado span      { color: #93c5fd; -webkit-text-fill-color: #93c5fd; }
-    .facet-badge.formalizado::before   { background: #60a5fa; box-shadow: 0 0 5px rgba(96,165,250,.75); }
-    .facet-badge.formalizado.is-open   { background: rgba(96,165,250,.20); box-shadow: 0 0 12px rgba(96,165,250,.15); }
+    .facet-badge.formalizado span    { color: #93c5fd; -webkit-text-fill-color: #93c5fd; }
+    .facet-badge.formalizado::before { background: #60a5fa; box-shadow: 0 0 4px rgba(96,165,250,.55); }
+    .facet-badge.formalizado:hover   { box-shadow: 0 4px 12px rgba(96,165,250,.14), 0 1px 4px rgba(0,0,0,.18); }
+    .facet-badge.formalizado.is-open {
+      background: rgba(96,165,250,.14);
+      border-color: rgba(96,165,250,.36);
+      box-shadow: 0 4px 14px rgba(96,165,250,.14), 0 1px 4px rgba(0,0,0,.18);
+    }
 
     /* contador */
     .facet-count {
@@ -511,44 +498,11 @@
         <div class="header-eyebrow">ATTRAPI · DICCO</div>
         <h1>Dirección de Ingeniería de Concursos y Costos de Construcción</h1>
         <div class="header-divider"></div>
-        <div class="header-sub">Procesos por área y responsable</div>
-      </header>
-
-      <!-- ── Director ── -->
-      <section class="grid-director" aria-label="Director">
-        <div class="acc director-card" id="acc-director">
-          <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-director">
-            <div class="acc-info">
-              <div class="acc-role">Director</div>
-              <div class="acc-name">Benjamín Gómez</div>
-            </div>
-            <span class="acc-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-          <div class="acc-panel" id="panel-director" role="region">
-            <div class="acc-panel-inner">
-              <div class="acc-body">
-
-                <div class="facet">
-                  <div class="facet-label"><span class="facet-badge proceso">En proceso</span></div>
-                  <div class="facet-items">
-                    <div class="proc-empty">Sin procesos registrados</div>
-                  </div>
-                </div>
-
-                <div class="facet">
-                  <div class="facet-label"><span class="facet-badge formalizado"><span>Formalizado</span></span></div>
-                  <div class="facet-items">
-                    <div class="proc-empty">Sin procesos registrados</div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
+        <div class="header-director">
+          <span class="header-director-role">Director</span>
+          <span class="header-director-name">Benjamín Gómez</span>
         </div>
-      </section>
+      </header>
 
       <!-- ── Subdirectores 2×2 ── -->
       <section class="grid-sub" aria-label="Subdirectores">
@@ -1104,7 +1058,7 @@
       if (e.key === 'Escape') closeAll(null);
     });
 
-    // Abrir subdirectores A, B, C, D al cargar (no el director)
+    // Abrir subdirectores A, B, C, D al cargar
     ['acc-a', 'acc-b', 'acc-c', 'acc-d'].forEach(id => {
       const acc = document.getElementById(id);
       if (acc) openAcc(acc);
@@ -1113,13 +1067,6 @@
     // ── Árbol horizontal + acordeón de facetas ──
     document.querySelectorAll('.acc-body').forEach(body => {
       const facets = Array.from(body.querySelectorAll(':scope > .facet'));
-
-      // Cima: nodo diamante con brazos
-      const top = document.createElement('div');
-      top.className = 'facet-tree-top';
-      const node = document.createElement('div');
-      node.className = 'facet-tree-node';
-      top.appendChild(node);
 
       // Columnas
       const cols = document.createElement('div');
@@ -1131,11 +1078,6 @@
         const isProceso = badge && badge.classList.contains('proceso');
 
         facet.classList.add(isProceso ? 'facet--proceso' : 'facet--formalizado');
-
-        // Stub vertical (brazo → badge)
-        const stub = document.createElement('div');
-        stub.className = 'facet-stub';
-        facet.insertBefore(stub, facet.firstChild);
 
         // Envolver items en panel
         const panel = document.createElement('div');
@@ -1183,7 +1125,6 @@
         cols.appendChild(facet);
       });
 
-      body.appendChild(top);
       body.appendChild(cols);
     });
   </script>
