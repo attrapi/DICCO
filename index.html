@@ -795,67 +795,80 @@
     }
     .cal-day.has-event {
       --cell-color: #fb923c;
-      background: rgba(255,255,255,.04);
-      border-color: color-mix(in srgb, var(--cell-color) 38%, rgba(255,255,255,.15));
+      background: rgba(255,255,255,.03);
+      border-color: rgba(255,255,255,.12);
       color: rgba(255,255,255,.9);
       cursor: pointer;
       font-weight: 800;
-      box-shadow: 0 1px 2px rgba(0,0,0,.18);
       display: block;
-      padding: 4px 4px 3px;
+      padding: 3px 5px 4px;
     }
     .cal-day.has-event:hover {
-      background: rgba(255,255,255,.07);
-      border-color: color-mix(in srgb, var(--cell-color) 65%, rgba(255,255,255,.2));
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.25);
       transform: translateY(-1px);
     }
     .cal-day.has-event.is-active {
-      background: rgba(255,255,255,.09);
+      background: rgba(255,255,255,.08);
       border-color: var(--cell-color);
-      box-shadow: 0 2px 6px rgba(0,0,0,.3);
     }
     .cal-day-num {
-      position: absolute;
-      top: 3px; left: 5px;
-      font-size: 9px;
+      display: block;
+      font-size: 12px;
       font-weight: 800;
-      color: rgba(255,255,255,.6);
+      color: rgba(255,255,255,.78);
       line-height: 1;
+      margin-bottom: 3px;
     }
     .cal-day-num.today-mark {
-      font-size: 8.5px;
-      letter-spacing: 1.1px;
+      font-size: 9px;
+      letter-spacing: 1.3px;
       color: #f7d98b;
       font-weight: 900;
     }
     .cal-day.has-event.is-active .cal-day-num { color: #fff; }
     .cal-day-ids {
-      position: absolute;
-      inset: 14px 3px 3px 3px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: stretch;
       gap: 2px;
+      width: 100%;
     }
-    /* ID como pastilla con el color de identidad — muestra el ID completo */
+    /* Chip de color + ID corto (más ligero que una pastilla) */
     .cal-day-id {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 7.5px;
+      font-size: 9px;
       font-weight: 700;
-      letter-spacing: -.1px;
-      line-height: 1.2;
-      color: #2a0a12;
-      background: var(--id-color, #fb923c);
-      padding: 1px 4px;
-      border-radius: 999px;
-      border: 1px solid #1a0610;
-      max-width: 100%;
+      letter-spacing: .1px;
+      line-height: 1.25;
+      color: rgba(255,255,255,.92);
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: center;
+      min-width: 0;
     }
+    .cal-day-id::before {
+      content: '';
+      flex-shrink: 0;
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      background: var(--id-color, #fb923c);
+      border: 1px solid rgba(0,0,0,.55);
+    }
+    .cal-day-id-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .cal-day-id.more {
+      color: rgba(255,255,255,.5);
+      font-size: 8.5px;
+      font-style: italic;
+      padding-left: 2px;
+    }
+    .cal-day-id.more::before { display: none; }
 
     /* Flash amarillo canario (suave) — 1s total */
     @keyframes cal-flash {
@@ -2206,15 +2219,25 @@
 
           const ids = document.createElement('div');
           ids.className = 'cal-day-ids';
-          idxs.forEach(i => {
+          const visible = idxs.slice(0, 3);
+          visible.forEach(i => {
             const it = procState.items[i];
-            const pill = document.createElement('div');
-            pill.className = 'cal-day-id';
-            pill.style.setProperty('--id-color', it.color);
-            pill.textContent = it.id;
-            pill.title = it.id;
-            ids.appendChild(pill);
+            const row = document.createElement('div');
+            row.className = 'cal-day-id';
+            row.style.setProperty('--id-color', it.color);
+            row.title = it.id;
+            const txt = document.createElement('span');
+            txt.className = 'cal-day-id-text';
+            txt.textContent = shortId(it.id);
+            row.appendChild(txt);
+            ids.appendChild(row);
           });
+          if (idxs.length > 3) {
+            const more = document.createElement('div');
+            more.className = 'cal-day-id more';
+            more.textContent = '+' + (idxs.length - 3) + ' más';
+            ids.appendChild(more);
+          }
           cell.appendChild(ids);
 
           cell.addEventListener('mouseenter', () => setActive(idxs[0]));
