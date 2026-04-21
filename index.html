@@ -601,6 +601,7 @@
       border-radius: 14px;
       background: rgba(0,0,0,.18);
       padding: 16px 18px;
+      scroll-margin-top: 30px;
     }
     .msection-head {
       display: flex;
@@ -662,12 +663,12 @@
       transform: translateX(3px);
     }
 
-    /* Flash amarillo al sincronizar desde calendario/timeline: 2s encendido + 2s fade */
+    /* Flash amarillo canario (suave) — 1s total */
     @keyframes card-flash {
-      0%, 50% {
-        background: #fde047;
-        border-color: #fde047;
-        box-shadow: 0 0 0 3px rgba(253,224,71,.55), 0 0 28px rgba(253,224,71,.9);
+      0%   {
+        background: #fef08a;
+        border-color: #fef08a;
+        box-shadow: 0 0 0 3px rgba(254,240,138,.55), 0 0 20px rgba(254,240,138,.8);
       }
       100% {
         background: rgba(255,255,255,.04);
@@ -676,7 +677,7 @@
       }
     }
     .modal-list .proc-card.pulse-card {
-      animation: card-flash 4s ease-out 1;
+      animation: card-flash 1s ease-out 1;
     }
 
     .modal-empty {
@@ -752,85 +753,111 @@
       border-color: rgba(247,217,139,.45);
       color: #f7d98b;
     }
+    /* Etiqueta HOY para el día actual (sin eventos) */
+    .cal-day-today {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      color: #2a0a12;
+      background: #f7d98b;
+      padding: 2px 7px;
+      border-radius: 999px;
+      box-shadow: 0 0 10px rgba(247,217,139,.55);
+    }
     .cal-day.has-event {
-      background: rgba(255,255,255,.04);
-      border-color: rgba(255,255,255,.18);
-      color: rgba(255,255,255,.85);
+      --cell-color: #fb923c;
+      background: color-mix(in srgb, var(--cell-color) 12%, rgba(0,0,0,.22));
+      border-color: color-mix(in srgb, var(--cell-color) 55%, transparent);
+      color: rgba(255,255,255,.9);
       cursor: pointer;
       font-weight: 800;
-      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--cell-color) 20%, transparent);
       display: block;
       padding: 4px 4px 3px;
     }
     .cal-day.has-event:hover {
-      background: rgba(255,255,255,.08);
-      border-color: rgba(255,255,255,.35);
+      background: color-mix(in srgb, var(--cell-color) 22%, rgba(0,0,0,.22));
+      border-color: color-mix(in srgb, var(--cell-color) 80%, transparent);
       transform: translateY(-1px);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--cell-color) 35%, transparent);
     }
     .cal-day.has-event.is-active {
-      background: rgba(255,255,255,.10);
-      border-color: rgba(255,255,255,.55);
-      box-shadow: 0 4px 14px rgba(0,0,0,.4);
+      background: color-mix(in srgb, var(--cell-color) 28%, rgba(0,0,0,.22));
+      border-color: var(--cell-color);
+      box-shadow: 0 4px 18px color-mix(in srgb, var(--cell-color) 50%, transparent);
     }
     .cal-day-num {
       position: absolute;
       top: 3px; left: 5px;
       font-size: 9px;
       font-weight: 800;
-      color: rgba(255,255,255,.55);
+      color: rgba(255,255,255,.6);
       line-height: 1;
+    }
+    .cal-day-num.today-mark {
+      font-size: 8.5px;
+      letter-spacing: 1.1px;
+      color: #f7d98b;
+      font-weight: 900;
     }
     .cal-day.has-event.is-active .cal-day-num { color: #fff; }
     .cal-day-ids {
       position: absolute;
-      inset: 14px 4px 4px 4px;
+      inset: 14px 3px 3px 3px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 1px;
+      align-items: stretch;
+      gap: 2px;
     }
+    /* ID como pastilla con el color de identidad */
     .cal-day-id {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 8.5px;
+      font-size: 8px;
       font-weight: 800;
-      letter-spacing: .15px;
-      color: var(--id-color, #fff);
-      line-height: 1.15;
+      letter-spacing: .1px;
+      line-height: 1.25;
+      color: #2a0a12;
+      background: var(--id-color, #fb923c);
+      padding: 1px 5px;
+      border-radius: 999px;
+      max-width: 100%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      text-shadow: 0 0 6px color-mix(in srgb, var(--id-color, #fff) 55%, transparent);
+      text-align: center;
+      box-shadow:
+        0 1px 3px rgba(0,0,0,.3),
+        0 0 8px color-mix(in srgb, var(--id-color, #fb923c) 40%, transparent);
     }
     .cal-day-id.more {
-      color: rgba(255,255,255,.6);
-      font-size: 8px;
-      text-shadow: none;
+      color: rgba(255,255,255,.7);
+      background: rgba(255,255,255,.08);
+      box-shadow: none;
+      font-size: 7.5px;
     }
 
-    /* Flash amarillo al sincronizar desde una tarjeta: 2s encendido + 2s fade */
+    /* Flash amarillo canario (suave) — 1s total */
     @keyframes cal-flash {
-      0%, 50% {
-        background: #fde047;
-        border-color: #fde047;
-        box-shadow: 0 0 0 3px rgba(253,224,71,.6), 0 0 28px rgba(253,224,71,.9);
-        transform: translateY(-1px) scale(1.04);
+      0%   {
+        background: #fef08a;
+        border-color: #fef08a;
+        box-shadow: 0 0 0 3px rgba(254,240,138,.55), 0 0 22px rgba(254,240,138,.85);
+        transform: translateY(-1px) scale(1.05);
       }
       100% {
-        background: rgba(255,255,255,.04);
-        border-color: rgba(255,255,255,.18);
-        box-shadow: 0 2px 8px rgba(0,0,0,.25);
         transform: translateY(0) scale(1);
       }
     }
-    .cal-day.has-event.pulse-cal { animation: cal-flash 4s ease-out 1; }
-    .cal-day.has-event.pulse-cal .cal-day-num,
-    .cal-day.has-event.pulse-cal .cal-day-id { color: #2a0a12 !important; text-shadow: none !important; }
+    .cal-day.has-event.pulse-cal { animation: cal-flash 1s ease-out 1; }
+    .cal-day.has-event.pulse-cal .cal-day-num { color: #2a0a12 !important; }
 
     /* ── Timeline ── */
     .timeline {
       position: relative;
-      padding: 30px 10px 50px;
-      min-height: 120px;
+      padding: 54px 10px 50px;
+      min-height: 150px;
       overflow-x: auto;
     }
     .timeline-track {
@@ -874,24 +901,23 @@
         inset 0 0 6px #fff;
     }
 
-    /* Flash amarillo al sincronizar desde una tarjeta: 2s encendido + 2s fade */
+    /* Flash amarillo canario (suave) — 1s total */
     @keyframes tl-flash {
-      0%, 50% {
-        transform: translate(-50%, -50%) scale(1.6);
-        background: radial-gradient(circle at 35% 30%, #fff 0%, #fde047 55%, #eab308 100%);
+      0%   {
+        transform: translate(-50%, -50%) scale(1.55);
+        background: radial-gradient(circle at 35% 30%, #fff 0%, #fef08a 55%, #fde047 100%);
         box-shadow:
-          0 0 0 6px rgba(253,224,71,.6),
-          0 0 18px #fde047,
-          0 0 38px #fde047,
-          0 0 62px rgba(253,224,71,.6),
-          inset 0 0 6px #fff;
+          0 0 0 5px rgba(254,240,138,.55),
+          0 0 14px #fef08a,
+          0 0 28px rgba(254,240,138,.75),
+          inset 0 0 5px #fff;
         border-color: #fff;
       }
       100% {
         transform: translate(-50%, -50%) scale(1);
       }
     }
-    .timeline-point.pulse-tl { animation: tl-flash 4s ease-out 1; }
+    .timeline-point.pulse-tl { animation: tl-flash 1s ease-out 1; }
     .timeline-label {
       position: absolute;
       top: calc(50% + 18px);
@@ -904,19 +930,28 @@
       pointer-events: none;
     }
     .timeline-id {
+      --id-color: #fb923c;
       position: absolute;
-      top: calc(50% - 32px);
-      transform: translateX(-50%);
+      top: calc(50% - 30px);
+      transform: translateX(-50%) rotate(-22deg);
+      transform-origin: 50% 100%;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 9px;
-      font-weight: 700;
-      color: rgba(247,217,139,.85);
+      font-weight: 800;
+      letter-spacing: .2px;
+      color: #2a0a12;
+      background: var(--id-color);
+      padding: 2px 7px;
+      border-radius: 999px;
       white-space: nowrap;
       pointer-events: none;
-      max-width: 140px;
+      max-width: 160px;
       overflow: hidden;
       text-overflow: ellipsis;
       text-align: center;
+      box-shadow:
+        0 2px 6px rgba(0,0,0,.35),
+        0 0 10px color-mix(in srgb, var(--id-color) 55%, transparent);
     }
     .timeline-point.is-active + .timeline-label,
     .timeline-point:hover + .timeline-label {
@@ -1935,8 +1970,16 @@
       });
     }
 
-    // Pulso: re-aplica una clase con reflow forzado y se auto-retira
-    function pulse(el, cls, ms = 4000) {
+    // Acorta el ID: recorta todo hasta después del bloque "999-" si existe.
+    // Ej: "999-I-10-2026" → "I-10-2026"; "N-15-2025" → "N-15-2025"
+    function shortId(id) {
+      if (!id) return '';
+      const m = id.match(/^\s*9{2,}[-\s]+(.+)$/);
+      return m ? m[1] : id;
+    }
+
+    // Pulso: re-aplica una clase con reflow forzado y se auto-retira (animaciones de 1s)
+    function pulse(el, cls, ms = 1100) {
       if (!el) return;
       el.classList.remove(cls);
       void el.offsetWidth;
@@ -1944,8 +1987,8 @@
       setTimeout(() => el.classList.remove(cls), ms);
     }
 
-    // Scroll suave dentro del overlay del modal
-    function smoothScrollTo(el, block = 'start') {
+    // Scroll suave — si recibimos un elemento concreto lo centramos; si no, lo traemos al top
+    function smoothScrollTo(el, block = 'center') {
       if (!el) return;
       el.scrollIntoView({ behavior: 'smooth', block });
     }
@@ -1953,26 +1996,32 @@
     // Al hacer click en una tarjeta: lleva al calendario+timeline y pulsa sus elementos
     function focusDateViews(idx) {
       const item = procState.items[idx];
-      // Si tiene fecha vamos al calendario; si solo tiene estatus, al timeline (o al que no esté vacío)
-      const calSection = mxCalendar.closest('.msection');
-      const tlSection  = mxTimeline.closest('.msection');
-      const target = item?.fechaDate ? calSection : tlSection;
-      smoothScrollTo(target, 'start');
+      // Buscamos la celda concreta (si tiene fecha) y el punto del timeline
+      let firstCell = null;
+      mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
+        const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
+        if (arr.includes(idx) && !firstCell) firstCell = cell;
+      });
+      const pt = mxTimeline.querySelector(`.timeline-point[data-idx="${idx}"]`);
+
+      // Scroll directo al elemento destino: el día si tiene fecha, si no el punto o la sección
+      const target = firstCell || pt || (item?.fechaDate ? mxCalendar.closest('.msection') : mxTimeline.closest('.msection'));
+      smoothScrollTo(target, 'center');
+
       setTimeout(() => {
         mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
           const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
           if (arr.includes(idx)) pulse(cell, 'pulse-cal');
         });
-        const pt = mxTimeline.querySelector(`.timeline-point[data-idx="${idx}"]`);
         pulse(pt, 'pulse-tl');
-      }, 260);
+      }, 320);
     }
 
     // Al hacer click en un día o punto: lleva a su tarjeta y la pulsa
     function focusCard(idx) {
       const card = mxList.querySelector(`.proc-card[data-idx="${idx}"]`);
-      smoothScrollTo(mxList.closest('.msection'), 'start');
-      setTimeout(() => pulse(card, 'pulse-card'), 260);
+      smoothScrollTo(card || mxList.closest('.msection'), 'center');
+      setTimeout(() => pulse(card, 'pulse-card'), 320);
     }
 
     function setActive(idx) {
@@ -2088,15 +2137,24 @@
       for (let d = 1; d <= daysInMonth; d++) {
         const cell = document.createElement('div');
         cell.className = 'cal-day';
-        if (isCurrentMonth && today.getDate() === d) cell.classList.add('is-today');
+        const isToday = isCurrentMonth && today.getDate() === d;
+        if (isToday) cell.classList.add('is-today');
+
         if (byDay.has(d)) {
           const idxs = byDay.get(d);
           cell.classList.add('has-event');
           cell.dataset.idxs = idxs.join(',');
+          // Cell color = color de la primera licitación (coincide con borde izq de su tarjeta y su punto en el timeline)
+          cell.style.setProperty('--cell-color', procState.items[idxs[0]].color);
 
           const num = document.createElement('span');
           num.className = 'cal-day-num';
-          num.textContent = d;
+          if (isToday) {
+            num.textContent = 'HOY';
+            num.classList.add('today-mark');
+          } else {
+            num.textContent = d;
+          }
           cell.appendChild(num);
 
           const ids = document.createElement('div');
@@ -2104,12 +2162,12 @@
           const visible = idxs.slice(0, 3);
           visible.forEach(i => {
             const it = procState.items[i];
-            const line = document.createElement('div');
-            line.className = 'cal-day-id';
-            line.style.setProperty('--id-color', it.color);
-            line.textContent = it.id;
-            line.title = it.id;
-            ids.appendChild(line);
+            const pill = document.createElement('div');
+            pill.className = 'cal-day-id';
+            pill.style.setProperty('--id-color', it.color);
+            pill.textContent = shortId(it.id);
+            pill.title = it.id;
+            ids.appendChild(pill);
           });
           if (idxs.length > 3) {
             const more = document.createElement('div');
@@ -2124,6 +2182,11 @@
             setActive(idxs[0]);
             focusCard(idxs[0]);
           });
+        } else if (isToday) {
+          const pill = document.createElement('span');
+          pill.className = 'cal-day-today';
+          pill.textContent = 'HOY';
+          cell.appendChild(pill);
         } else {
           cell.textContent = d;
         }
@@ -2176,7 +2239,9 @@
         const id = document.createElement('div');
         id.className = 'timeline-id';
         id.style.left = pct + '%';
-        id.textContent = item.id;
+        id.style.setProperty('--id-color', item.color);
+        id.textContent = shortId(item.id);
+        id.title = item.id;
 
         point.addEventListener('mouseenter', () => setActive(item.idx));
         point.addEventListener('click', () => {
