@@ -659,6 +659,17 @@
       background: var(--gold-grad);
       border-radius: 2px;
     }
+    /* Título "Estatus" alineado con la columna de estatus de cada tarjeta */
+    .msection-title--estatus {
+      min-width: 160px;
+      padding-left: 22px;
+      margin-right: 13px;
+    }
+    .msection-title--estatus::before { display: none; }
+    @media (max-width: 760px) {
+      .msection-head--split { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .msection-title--estatus { min-width: 0; padding-left: 0; margin-right: 0; }
+    }
 
     /* ── Lista de una sola columna (una licitación por fila) ── */
     .modal-list {
@@ -1792,8 +1803,9 @@
       <div class="modal-body">
 
         <section class="msection">
-          <div class="msection-head">
+          <div class="msection-head msection-head--split">
             <div class="msection-title">Licitaciones</div>
+            <div class="msection-title msection-title--estatus">Estatus</div>
           </div>
           <div class="modal-list" id="mx-list"></div>
         </section>
@@ -2191,7 +2203,6 @@
             </div>
           </div>
           <div class="proc-card-status">
-            <div class="proc-card-status-label">Estatus</div>
             <div class="proc-card-status-value">${item.fechaStr || ''}</div>
           </div>
         `;
