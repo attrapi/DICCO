@@ -855,6 +855,20 @@
       display: block;
       padding: 3px 5px 4px;
     }
+    /* Etiqueta "Fallo" arriba del día en celdas con evento (estilo dorado) */
+    .cal-day-fallo {
+      display: block;
+      font-size: 7.5px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
     .cal-day.has-event:hover {
       background: rgba(255,255,255,.06);
       border-color: rgba(255,255,255,.25);
@@ -870,7 +884,7 @@
       font-weight: 800;
       color: rgba(255,255,255,.78);
       line-height: 1;
-      margin-bottom: 7px;
+      margin-bottom: 6px;
     }
     .cal-day-num.today-mark {
       font-size: 9px;
@@ -937,20 +951,182 @@
     .cal-day.has-event.pulse-cal { animation: cal-flash 1s ease-out 1; }
     .cal-day.has-event.pulse-cal .cal-day-num { color: #2a0a12 !important; }
 
-    /* ── Timeline ── */
+    /* ── Timeline (Gantt-like: columna fija "Contrato" a la izquierda + scroll horizontal por mes) ── */
     .timeline {
       position: relative;
-      padding: 72px 10px 72px;
-      min-height: 190px;
-      overflow-x: auto;
+      display: flex;
+      align-items: stretch;
+      min-height: 240px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.08);
+      overflow: hidden;
     }
+    .timeline-legend {
+      flex: 0 0 auto;
+      width: 180px;
+      padding: 14px 14px 14px 16px;
+      border-right: 1px solid rgba(255,255,255,.10);
+      background: rgba(74,20,34,.38);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      z-index: 3;
+    }
+    /* Salida de la línea amarilla desde el centro derecho de la columna "Contrato" */
+    .timeline-legend::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: 50%;
+      width: 10px;
+      height: 2px;
+      background: #f7d98b;
+      transform: translateY(-50%);
+      box-shadow: 0 0 8px rgba(247,217,139,.45);
+    }
+    .timeline-legend-head {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timeline-legend-head::before {
+      content: '';
+      display: inline-block;
+      width: 14px; height: 2px;
+      background: var(--gold-grad);
+      border-radius: 2px;
+    }
+    .timeline-legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+      max-height: 180px;
+    }
+    .timeline-legend-item {
+      --id-color: #fb923c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: background .14s, border-color .14s;
+    }
+    .timeline-legend-item:hover,
+    .timeline-legend-item.is-active {
+      background: rgba(255,255,255,.06);
+      border-color: color-mix(in srgb, var(--id-color) 40%, transparent);
+    }
+    .timeline-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--id-color);
+      border: 1px solid rgba(0,0,0,.55);
+      flex-shrink: 0;
+    }
+    .timeline-legend-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,.90);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    /* Área scrolleable con la línea amarilla y los puntos por fecha */
+    .timeline-scroll {
+      flex: 1;
+      position: relative;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      padding: 14px 16px 14px 20px;
+    }
+    .timeline-months {
+      display: flex;
+      height: 22px;
+      margin-bottom: 20px;
+    }
+    .timeline-month {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(247,217,139,.75);
+      border-left: 1px dashed rgba(255,255,255,.18);
+    }
+    .timeline-month:first-child {
+      border-left: none;
+      padding-left: 0;
+    }
+
     .timeline-track {
       position: relative;
       height: 2px;
-      background: linear-gradient(90deg, rgba(251,146,60,.15), rgba(247,217,139,.55), rgba(251,146,60,.15));
-      margin: 24px 0;
+      background: linear-gradient(90deg, rgba(251,146,60,.15), rgba(247,217,139,.55), rgba(251,146,60,.55), rgba(247,217,139,.55), rgba(251,146,60,.15));
+      margin: 40px 0 24px;
       border-radius: 2px;
-      min-width: 100%;
+    }
+    /* Líneas verticales punteadas marcando inicio de cada mes en el track */
+    .timeline-month-sep {
+      position: absolute;
+      top: -40px;
+      bottom: -70px;
+      width: 0;
+      border-left: 1px dashed rgba(255,255,255,.10);
+      pointer-events: none;
+    }
+
+    /* Botones de navegación por mes */
+    .timeline-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(58,15,27,.92);
+      color: #f7d98b;
+      border: 1px solid rgba(247,217,139,.45);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      transition: background .15s, transform .15s, border-color .15s;
+    }
+    .timeline-nav:hover {
+      background: rgba(74,20,34,1);
+      border-color: #f7d98b;
+      transform: translateY(-50%) scale(1.08);
+    }
+    .timeline-nav--prev { left: 188px; }
+    .timeline-nav--next { right: 8px; }
+    .timeline-nav[disabled] {
+      opacity: .3;
+      cursor: not-allowed;
+      pointer-events: none;
     }
     .timeline-point {
       --pt-color: #fb923c;
@@ -1812,7 +1988,7 @@
 
         <section class="msection">
           <div class="msection-head">
-            <div class="msection-title">Calendario de fallos</div>
+            <div class="msection-title">Calendario</div>
             <div class="cal-nav">
               <button type="button" id="cal-prev" aria-label="Mes anterior">
                 <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2136,6 +2312,15 @@
       const target = firstCell || pt || mxCalendar.closest('.msection');
       smoothScrollTo(target, 'center');
 
+      // Scroll horizontal del timeline para que el punto quede visible
+      const scrollArea = mxTimeline.querySelector('.timeline-scroll');
+      if (pt && scrollArea) {
+        const ptLeft = parseFloat(pt.style.left) || 0;
+        const visW = scrollArea.clientWidth;
+        const desired = Math.max(0, ptLeft - visW / 2);
+        scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
+      }
+
       setTimeout(() => {
         mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
           const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
@@ -2163,6 +2348,9 @@
         el.classList.toggle('is-active', idxs.includes(idx));
       });
       mxTimeline.querySelectorAll('.timeline-point').forEach(el => {
+        el.classList.toggle('is-active', +el.dataset.idx === idx);
+      });
+      mxTimeline.querySelectorAll('.timeline-legend-item').forEach(el => {
         el.classList.toggle('is-active', +el.dataset.idx === idx);
       });
 
@@ -2264,6 +2452,12 @@
           // Cell color = color de la primera licitación (coincide con borde izq de su tarjeta y su punto en el timeline)
           cell.style.setProperty('--cell-color', procState.items[idxs[0]].color);
 
+          // Etiqueta "Fallo" dorada arriba del día
+          const fallo = document.createElement('span');
+          fallo.className = 'cal-day-fallo';
+          fallo.textContent = 'Fallo';
+          cell.appendChild(fallo);
+
           const num = document.createElement('span');
           num.className = 'cal-day-num';
           if (isToday) {
@@ -2330,24 +2524,95 @@
         return;
       }
 
+      // ── Columna fija izquierda: "Contrato" + IDs cortos ───────────────
+      const legend = document.createElement('aside');
+      legend.className = 'timeline-legend';
+      const legendHead = document.createElement('div');
+      legendHead.className = 'timeline-legend-head';
+      legendHead.textContent = 'Contrato';
+      legend.appendChild(legendHead);
+
+      const legendList = document.createElement('div');
+      legendList.className = 'timeline-legend-list';
+      dated.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'timeline-legend-item';
+        row.dataset.idx = item.idx;
+        row.style.setProperty('--id-color', item.color);
+        row.title = item.id;
+        row.innerHTML = `
+          <span class="timeline-legend-dot"></span>
+          <span class="timeline-legend-id">${shortId(item.id)}</span>
+        `;
+        row.addEventListener('mouseenter', () => setActive(item.idx));
+        row.addEventListener('click', () => {
+          setActive(item.idx);
+          focusCard(item.idx);
+        });
+        legendList.appendChild(row);
+      });
+      legend.appendChild(legendList);
+      mxTimeline.appendChild(legend);
+
+      // ── Área scrolleable: meses como columnas + track con puntos ──────
+      const scroll = document.createElement('div');
+      scroll.className = 'timeline-scroll';
+
+      // Lista ordenada de meses entre el primer y el último fallo
+      const first = dated[0].fechaDate;
+      const last  = dated[dated.length - 1].fechaDate;
+      const months = [];
+      let cur = new Date(first.getFullYear(), first.getMonth(), 1);
+      const endCur = new Date(last.getFullYear(), last.getMonth(), 1);
+      while (cur <= endCur) {
+        months.push(new Date(cur));
+        cur.setMonth(cur.getMonth() + 1);
+      }
+
+      const MONTH_W = 360;                          // px por mes
+      const totalW = months.length * MONTH_W;
+
+      // Cabecera con los nombres de mes
+      const monthsRow = document.createElement('div');
+      monthsRow.className = 'timeline-months';
+      monthsRow.style.width = totalW + 'px';
+      months.forEach(mo => {
+        const cell = document.createElement('div');
+        cell.className = 'timeline-month';
+        cell.style.width = MONTH_W + 'px';
+        cell.textContent = `${MESES[mo.getMonth()]} ${mo.getFullYear()}`;
+        monthsRow.appendChild(cell);
+      });
+      scroll.appendChild(monthsRow);
+
+      // Track con la línea amarilla
       const track = document.createElement('div');
       track.className = 'timeline-track';
+      track.style.width = totalW + 'px';
 
-      // Rango con un poco de padding a cada lado
-      const minT = dated[0].fechaDate.getTime();
-      const maxT = dated[dated.length - 1].fechaDate.getTime();
-      const span = Math.max(1, maxT - minT);
-      const pad = 0.06; // 6% de margen en cada extremo
+      // Separadores verticales entre meses (puntitos dentro del área)
+      months.forEach((_, mi) => {
+        if (mi === 0) return;
+        const sep = document.createElement('div');
+        sep.className = 'timeline-month-sep';
+        sep.style.left = (mi * MONTH_W) + 'px';
+        track.appendChild(sep);
+      });
 
+      // Posicionar cada punto: mes * ancho_mes + (día-1)/(días_mes-1) * ancho_mes
       dated.forEach((item, i) => {
-        const t   = item.fechaDate.getTime();
-        const pct = span === 0 ? 50 : (pad * 100) + ((t - minT) / span) * (100 - pad * 200);
+        const d = item.fechaDate;
+        const mi = months.findIndex(m => m.getMonth() === d.getMonth() && m.getFullYear() === d.getFullYear());
+        const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        const dayRatio = daysInMonth > 1 ? (d.getDate() - 1) / (daysInMonth - 1) : 0.5;
+        // Dejamos un margen interno del 8% dentro del mes para que el punto no pegue al separador
+        const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
         const pos = i % 2 === 0 ? 'above' : 'below';
 
         const point = document.createElement('div');
         point.className = 'timeline-point';
         point.dataset.idx = item.idx;
-        point.style.left = pct + '%';
+        point.style.left = leftPx + 'px';
         point.style.setProperty('--pt-color', item.color);
         point.title = `${item.id} — ${item.fechaStr}`;
         point.addEventListener('mouseenter', () => setActive(item.idx));
@@ -2356,14 +2621,11 @@
           focusCard(item.idx);
         });
 
-        const d = item.fechaDate;
         const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
-
         const node = document.createElement('div');
         node.className = `timeline-node ${pos}`;
-        node.style.left = pct + '%';
+        node.style.left = leftPx + 'px';
         node.style.setProperty('--id-color', item.color);
-        // Orden en DOM siempre: stem + bubble; flex-direction invierte para 'above'
         node.innerHTML = `
           <div class="timeline-stem"></div>
           <div class="timeline-bubble">
@@ -2376,7 +2638,42 @@
         track.appendChild(node);
       });
 
-      mxTimeline.appendChild(track);
+      scroll.appendChild(track);
+      mxTimeline.appendChild(scroll);
+
+      // ── Flechas prev/next para navegar entre meses ────────────────────
+      const prev = document.createElement('button');
+      prev.type = 'button';
+      prev.className = 'timeline-nav timeline-nav--prev';
+      prev.setAttribute('aria-label', 'Mes anterior');
+      prev.innerHTML = '‹';
+      const next = document.createElement('button');
+      next.type = 'button';
+      next.className = 'timeline-nav timeline-nav--next';
+      next.setAttribute('aria-label', 'Mes siguiente');
+      next.innerHTML = '›';
+
+      const updateNavState = () => {
+        prev.disabled = scroll.scrollLeft <= 2;
+        next.disabled = scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 2;
+      };
+      prev.addEventListener('click', () => scroll.scrollBy({ left: -MONTH_W, behavior: 'smooth' }));
+      next.addEventListener('click', () => scroll.scrollBy({ left:  MONTH_W, behavior: 'smooth' }));
+      scroll.addEventListener('scroll', updateNavState, { passive: true });
+
+      mxTimeline.appendChild(prev);
+      mxTimeline.appendChild(next);
+
+      // Llevar el scroll al mes que contiene la licitación más próxima a hoy
+      requestAnimationFrame(() => {
+        const now = Date.now();
+        const target = dated.find(i => i.fechaDate.getTime() >= now) || dated[0];
+        const mi = months.findIndex(m =>
+          m.getMonth() === target.fechaDate.getMonth() && m.getFullYear() === target.fechaDate.getFullYear()
+        );
+        scroll.scrollLeft = Math.max(0, mi * MONTH_W - 20);
+        updateNavState();
+      });
     }
 
     function openProcModal(acc) {
