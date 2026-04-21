@@ -1970,11 +1970,11 @@
       });
     }
 
-    // Acorta el ID: recorta todo hasta después del bloque "999-" si existe.
-    // Ej: "999-I-10-2026" → "I-10-2026"; "N-15-2025" → "N-15-2025"
+    // Acorta el ID: recorta todo hasta después del "999-" (aparezca donde aparezca).
+    // Ej: "LO-09-D00-009D00999-I-3-2026" → "I-3-2026"; "999-I-10-2026" → "I-10-2026"
     function shortId(id) {
       if (!id) return '';
-      const m = id.match(/^\s*9{2,}[-\s]+(.+)$/);
+      const m = id.match(/999[-\s]+(.+)$/);
       return m ? m[1] : id;
     }
 
