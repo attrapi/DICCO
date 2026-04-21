@@ -660,18 +660,59 @@
       border-radius: 2px;
     }
 
-    /* ── Lista 2 columnas ── */
+    /* ── Lista de una sola columna (una licitación por fila) ── */
     .modal-list {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       gap: 10px;
     }
-    @media (max-width: 760px) { .modal-list { grid-template-columns: 1fr; } }
 
     .modal-list .proc-card {
       cursor: pointer;
       --card-color: #fb923c;
+      display: flex;
+      align-items: center;
+      gap: 22px;
       transition: background .16s, border-color .16s, transform .16s, box-shadow .16s;
+    }
+    .modal-list .proc-card-main { flex: 1; min-width: 0; }
+    .modal-list .proc-card-status {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+      padding-left: 22px;
+      border-left: 1px solid rgba(255,255,255,.14);
+      min-width: 160px;
+    }
+    .modal-list .proc-card-status-label {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: rgba(255,255,255,.45);
+    }
+    .modal-list .proc-card-status-value {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,.9);
+      letter-spacing: .25px;
+      min-height: 1.1em;
+    }
+    @media (max-width: 760px) {
+      .modal-list .proc-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .modal-list .proc-card-status {
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,.14);
+        padding-left: 0;
+        padding-top: 10px;
+        min-width: 0;
+      }
     }
     /* Reemplaza el dorado del ::before con el color de identidad de la licitación */
     .modal-list .proc-card::before {
@@ -2139,30 +2180,20 @@
         card.dataset.idx = item.idx;
         card.style.setProperty('--card-color', item.color);
         card.innerHTML = `
-          <div class="proc-title">${item.title}</div>
-          <div class="proc-id-row">
-            <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <a class="proc-id" href="${item.href}" target="_blank" rel="noopener noreferrer">${item.id}</a>
+          <div class="proc-card-main">
+            <div class="proc-title">${item.title}</div>
+            <div class="proc-id-row">
+              <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              <a class="proc-id" href="${item.href}" target="_blank" rel="noopener noreferrer">${item.id}</a>
+            </div>
           </div>
-          ${item.fechaStr ? `
-          <div class="proc-meta-row">
-            <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
-              <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-            </svg>
-            <span class="proc-meta"><strong>Fallo:</strong> ${item.fechaStr}</span>
-          </div>` : ''}
-          ${item.estatusStr ? `
-          <div class="proc-meta-row">
-            <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/>
-              <path d="M12 7v6M12 16v.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-            </svg>
-            <span class="proc-meta"><strong>Estatus:</strong> ${item.estatusStr}</span>
-          </div>` : ''}
+          <div class="proc-card-status">
+            <div class="proc-card-status-label">Status</div>
+            <div class="proc-card-status-value">${item.fechaStr || ''}</div>
+          </div>
         `;
         card.addEventListener('mouseenter', () => setActive(item.idx));
         card.addEventListener('click', (e) => {
