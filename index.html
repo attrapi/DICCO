@@ -641,22 +641,19 @@
     .modal-list .proc-card {
       cursor: pointer;
       --card-color: #fb923c;
+      transition: background .16s, border-color .16s, transform .16s, box-shadow .16s;
     }
-    /* Franja de identidad a la derecha */
-    .modal-list .proc-card::after {
-      content: '';
-      position: absolute;
-      right: 0; top: 0; bottom: 0;
-      width: 3px;
+    /* Reemplaza el dorado del ::before con el color de identidad de la licitación */
+    .modal-list .proc-card::before {
       background: var(--card-color);
-      border-radius: 0 11px 11px 0;
-      box-shadow: -1px 0 8px color-mix(in srgb, var(--card-color) 45%, transparent);
-      transition: width .15s, box-shadow .15s;
+      box-shadow: 1px 0 10px color-mix(in srgb, var(--card-color) 60%, transparent);
+      width: 4px;
+      transition: width .16s, box-shadow .16s;
     }
-    .modal-list .proc-card:hover::after,
-    .modal-list .proc-card.is-active::after {
-      width: 5px;
-      box-shadow: -1px 0 12px color-mix(in srgb, var(--card-color) 70%, transparent);
+    .modal-list .proc-card:hover::before,
+    .modal-list .proc-card.is-active::before {
+      width: 6px;
+      box-shadow: 1px 0 18px color-mix(in srgb, var(--card-color) 90%, transparent);
     }
     .modal-list .proc-card.is-active {
       background: color-mix(in srgb, var(--card-color) 10%, rgba(255,255,255,.04));
@@ -665,15 +662,21 @@
       transform: translateX(3px);
     }
 
-    /* Pulso al hacer click (scroll cruzado) */
-    @keyframes card-pulse {
-      0%   { box-shadow: 0 0 0 0 var(--card-color, #fb923c),
-                         0 0 26px color-mix(in srgb, var(--card-color, #fb923c) 40%, transparent); }
-      70%  { box-shadow: 0 0 0 14px transparent, 0 0 0 transparent; }
-      100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; }
+    /* Flash amarillo al sincronizar desde calendario/timeline: 2s encendido + 2s fade */
+    @keyframes card-flash {
+      0%, 50% {
+        background: #fde047;
+        border-color: #fde047;
+        box-shadow: 0 0 0 3px rgba(253,224,71,.55), 0 0 28px rgba(253,224,71,.9);
+      }
+      100% {
+        background: rgba(255,255,255,.04);
+        border-color: rgba(255,255,255,.11);
+        box-shadow: 0 0 0 0 transparent, 0 0 0 transparent;
+      }
     }
     .modal-list .proc-card.pulse-card {
-      animation: card-pulse .9s ease-out 1;
+      animation: card-flash 4s ease-out 1;
     }
 
     .modal-empty {
@@ -742,6 +745,7 @@
       color: rgba(255,255,255,.55);
       position: relative;
       transition: background .14s, border-color .14s, transform .14s;
+      overflow: hidden;
     }
     .cal-day.is-blank { background: transparent; border-color: transparent; }
     .cal-day.is-today {
@@ -749,68 +753,78 @@
       color: #f7d98b;
     }
     .cal-day.has-event {
-      background: rgba(251,146,60,.14);
-      border-color: rgba(251,146,60,.45);
-      color: #ffedd5;
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.18);
+      color: rgba(255,255,255,.85);
       cursor: pointer;
       font-weight: 800;
-      box-shadow: 0 2px 8px rgba(251,146,60,.12);
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      display: block;
+      padding: 4px 4px 3px;
     }
     .cal-day.has-event:hover {
-      background: rgba(251,146,60,.24);
-      border-color: rgba(251,146,60,.75);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.35);
       transform: translateY(-1px);
     }
     .cal-day.has-event.is-active {
-      background: rgba(251,146,60,.32);
-      border-color: #fb923c;
-      box-shadow: 0 4px 14px rgba(251,146,60,.36);
-      color: #fff;
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.55);
+      box-shadow: 0 4px 14px rgba(0,0,0,.4);
     }
-    .cal-day-dot {
+    .cal-day-num {
       position: absolute;
-      bottom: 4px; left: 50%;
-      transform: translateX(-50%);
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--dot-color, #fb923c);
-      box-shadow: 0 0 6px color-mix(in srgb, var(--dot-color, #fb923c) 70%, transparent);
+      top: 3px; left: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      color: rgba(255,255,255,.55);
+      line-height: 1;
     }
-    .cal-day-strip {
+    .cal-day.has-event.is-active .cal-day-num { color: #fff; }
+    .cal-day-ids {
       position: absolute;
-      bottom: 3px; left: 18%; right: 18%;
-      height: 3px;
+      inset: 14px 4px 4px 4px;
       display: flex;
+      flex-direction: column;
+      justify-content: center;
       gap: 1px;
-      border-radius: 2px;
+    }
+    .cal-day-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: .15px;
+      color: var(--id-color, #fff);
+      line-height: 1.15;
+      white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 0 6px color-mix(in srgb, var(--id-color, #fff) 55%, transparent);
     }
-    .cal-day-strip > span {
-      flex: 1;
-      border-radius: 2px;
-    }
-    .cal-day-badge {
-      position: absolute;
-      top: 2px; right: 3px;
-      min-width: 13px; height: 13px;
-      padding: 0 3px;
-      border-radius: 10px;
-      background: #fb923c;
-      color: #2a0a12;
+    .cal-day-id.more {
+      color: rgba(255,255,255,.6);
       font-size: 8px;
-      font-weight: 900;
-      line-height: 13px;
-      text-align: center;
+      text-shadow: none;
     }
 
-    /* Pulso del día al scrollear desde una tarjeta */
-    @keyframes cal-pulse {
-      0%   { transform: translateY(-2px) scale(1.18);
-             box-shadow: 0 0 0 4px rgba(255,255,255,.55), 0 6px 22px rgba(251,146,60,.55); }
-      100% { transform: translateY(0) scale(1);
-             box-shadow: 0 2px 8px rgba(251,146,60,.12); }
+    /* Flash amarillo al sincronizar desde una tarjeta: 2s encendido + 2s fade */
+    @keyframes cal-flash {
+      0%, 50% {
+        background: #fde047;
+        border-color: #fde047;
+        box-shadow: 0 0 0 3px rgba(253,224,71,.6), 0 0 28px rgba(253,224,71,.9);
+        transform: translateY(-1px) scale(1.04);
+      }
+      100% {
+        background: rgba(255,255,255,.04);
+        border-color: rgba(255,255,255,.18);
+        box-shadow: 0 2px 8px rgba(0,0,0,.25);
+        transform: translateY(0) scale(1);
+      }
     }
-    .cal-day.has-event.pulse-cal { animation: cal-pulse .85s ease-out 1; }
+    .cal-day.has-event.pulse-cal { animation: cal-flash 4s ease-out 1; }
+    .cal-day.has-event.pulse-cal .cal-day-num,
+    .cal-day.has-event.pulse-cal .cal-day-id { color: #2a0a12 !important; text-shadow: none !important; }
 
     /* ── Timeline ── */
     .timeline {
@@ -834,31 +848,50 @@
       transform: translate(-50%, -50%);
       width: 14px; height: 14px;
       border-radius: 50%;
-      background: var(--pt-color);
-      border: 2px solid #2a0a12;
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--pt-color) 35%, transparent),
-                  0 0 8px color-mix(in srgb, var(--pt-color) 55%, transparent);
+      /* Neón: centro claro, halo saturado */
+      background: radial-gradient(circle at 35% 30%,
+                    #fff 0%,
+                    color-mix(in srgb, var(--pt-color) 55%, #fff) 35%,
+                    var(--pt-color) 75%);
+      border: 1.5px solid color-mix(in srgb, var(--pt-color) 35%, #fff);
+      box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--pt-color) 65%, transparent),
+        0 0 10px var(--pt-color),
+        0 0 22px color-mix(in srgb, var(--pt-color) 80%, transparent),
+        0 0 38px color-mix(in srgb, var(--pt-color) 45%, transparent),
+        inset 0 0 5px rgba(255,255,255,.85);
       cursor: pointer;
       transition: transform .15s, box-shadow .15s;
     }
     .timeline-point:hover,
     .timeline-point.is-active {
-      transform: translate(-50%, -50%) scale(1.35);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--pt-color) 55%, transparent),
-                  0 0 14px color-mix(in srgb, var(--pt-color) 80%, transparent);
+      transform: translate(-50%, -50%) scale(1.4);
+      box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--pt-color) 80%, transparent),
+        0 0 14px var(--pt-color),
+        0 0 32px var(--pt-color),
+        0 0 54px color-mix(in srgb, var(--pt-color) 60%, transparent),
+        inset 0 0 6px #fff;
     }
 
-    /* Pulso del punto al scrollear desde una tarjeta */
-    @keyframes tl-pulse {
-      0%   { box-shadow: 0 0 0 8px color-mix(in srgb, var(--pt-color) 60%, transparent),
-                         0 0 22px var(--pt-color); }
-      100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--pt-color) 35%, transparent),
-                         0 0 8px color-mix(in srgb, var(--pt-color) 55%, transparent); }
+    /* Flash amarillo al sincronizar desde una tarjeta: 2s encendido + 2s fade */
+    @keyframes tl-flash {
+      0%, 50% {
+        transform: translate(-50%, -50%) scale(1.6);
+        background: radial-gradient(circle at 35% 30%, #fff 0%, #fde047 55%, #eab308 100%);
+        box-shadow:
+          0 0 0 6px rgba(253,224,71,.6),
+          0 0 18px #fde047,
+          0 0 38px #fde047,
+          0 0 62px rgba(253,224,71,.6),
+          inset 0 0 6px #fff;
+        border-color: #fff;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
     }
-    .timeline-point.pulse-tl {
-      animation: tl-pulse .9s ease-out 1;
-      transform: translate(-50%, -50%) scale(1.35);
-    }
+    .timeline-point.pulse-tl { animation: tl-flash 4s ease-out 1; }
     .timeline-label {
       position: absolute;
       top: calc(50% + 18px);
@@ -1903,7 +1936,7 @@
     }
 
     // Pulso: re-aplica una clase con reflow forzado y se auto-retira
-    function pulse(el, cls, ms = 900) {
+    function pulse(el, cls, ms = 4000) {
       if (!el) return;
       el.classList.remove(cls);
       void el.offsetWidth;
@@ -2055,37 +2088,44 @@
       for (let d = 1; d <= daysInMonth; d++) {
         const cell = document.createElement('div');
         cell.className = 'cal-day';
-        cell.textContent = d;
         if (isCurrentMonth && today.getDate() === d) cell.classList.add('is-today');
         if (byDay.has(d)) {
           const idxs = byDay.get(d);
           cell.classList.add('has-event');
           cell.dataset.idxs = idxs.join(',');
-          if (idxs.length > 1) {
-            const badge = document.createElement('span');
-            badge.className = 'cal-day-badge';
-            badge.textContent = idxs.length;
-            cell.appendChild(badge);
 
-            const strip = document.createElement('div');
-            strip.className = 'cal-day-strip';
-            idxs.forEach(i => {
-              const seg = document.createElement('span');
-              seg.style.background = procState.items[i].color;
-              strip.appendChild(seg);
-            });
-            cell.appendChild(strip);
-          } else {
-            const dot = document.createElement('span');
-            dot.className = 'cal-day-dot';
-            dot.style.setProperty('--dot-color', procState.items[idxs[0]].color);
-            cell.appendChild(dot);
+          const num = document.createElement('span');
+          num.className = 'cal-day-num';
+          num.textContent = d;
+          cell.appendChild(num);
+
+          const ids = document.createElement('div');
+          ids.className = 'cal-day-ids';
+          const visible = idxs.slice(0, 3);
+          visible.forEach(i => {
+            const it = procState.items[i];
+            const line = document.createElement('div');
+            line.className = 'cal-day-id';
+            line.style.setProperty('--id-color', it.color);
+            line.textContent = it.id;
+            line.title = it.id;
+            ids.appendChild(line);
+          });
+          if (idxs.length > 3) {
+            const more = document.createElement('div');
+            more.className = 'cal-day-id more';
+            more.textContent = '+' + (idxs.length - 3);
+            ids.appendChild(more);
           }
+          cell.appendChild(ids);
+
           cell.addEventListener('mouseenter', () => setActive(idxs[0]));
           cell.addEventListener('click', () => {
             setActive(idxs[0]);
             focusCard(idxs[0]);
           });
+        } else {
+          cell.textContent = d;
         }
         mxCalendar.appendChild(cell);
       }
