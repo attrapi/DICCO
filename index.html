@@ -704,6 +704,18 @@
       letter-spacing: 1.3px;
       color: rgba(255,255,255,.45);
     }
+    .modal-list .proc-card-status-fallo {
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
     .modal-list .proc-card-status-value {
       font-size: 12px;
       font-weight: 700;
@@ -854,20 +866,6 @@
       font-weight: 800;
       display: block;
       padding: 3px 5px 4px;
-    }
-    /* Etiqueta "Fallo" arriba del día en celdas con evento (estilo dorado) */
-    .cal-day-fallo {
-      display: block;
-      font-size: 7.5px;
-      font-weight: 800;
-      letter-spacing: 1.3px;
-      text-transform: uppercase;
-      background: var(--gold-grad);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-      margin-bottom: 3px;
     }
     .cal-day.has-event:hover {
       background: rgba(255,255,255,.06);
@@ -2393,6 +2391,7 @@
             </div>
           </div>
           <div class="proc-card-status">
+            ${item.fechaStr ? `<div class="proc-card-status-fallo">Fallo</div>` : ''}
             <div class="proc-card-status-value">${item.fechaStr || ''}</div>
           </div>
         `;
@@ -2453,12 +2452,6 @@
           cell.dataset.idxs = idxs.join(',');
           // Cell color = color de la primera licitación (coincide con borde izq de su tarjeta y su punto en el timeline)
           cell.style.setProperty('--cell-color', procState.items[idxs[0]].color);
-
-          // Etiqueta "Fallo" dorada arriba del día
-          const fallo = document.createElement('span');
-          fallo.className = 'cal-day-fallo';
-          fallo.textContent = 'Fallo';
-          cell.appendChild(fallo);
 
           const num = document.createElement('span');
           num.className = 'cal-day-num';
