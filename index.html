@@ -1164,6 +1164,8 @@
       }
     }
     .timeline-point.pulse-tl { animation: tl-flash 1s ease-out 1; }
+    /* Palpitación sostenida (3s) — se aplica al click del ID en la leyenda */
+    .timeline-point.pulse-tl-hold { animation: tl-flash 1s ease-out 3; }
     /* Nodo: callout con tallo + pastilla (ID) + fecha, alternando arriba/abajo */
     .timeline-node {
       --id-color: #fb923c;
@@ -2547,7 +2549,16 @@
         row.addEventListener('mouseenter', () => setActive(item.idx));
         row.addEventListener('click', () => {
           setActive(item.idx);
-          focusCard(item.idx);
+          // No mover el scroll vertical: solo enfocar el punto dentro del timeline
+          const pt = mxTimeline.querySelector(`.timeline-point[data-idx="${item.idx}"]`);
+          const scrollArea = mxTimeline.querySelector('.timeline-scroll');
+          if (pt && scrollArea) {
+            const ptLeft = parseFloat(pt.style.left) || 0;
+            const desired = Math.max(0, ptLeft - scrollArea.clientWidth / 2);
+            scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
+          }
+          // Palpita 3 segundos (3 iteraciones de 1s)
+          pulse(pt, 'pulse-tl-hold', 3000);
         });
         legendList.appendChild(row);
       });
