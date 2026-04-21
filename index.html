@@ -856,8 +856,8 @@
     /* ── Timeline ── */
     .timeline {
       position: relative;
-      padding: 54px 10px 50px;
-      min-height: 150px;
+      padding: 72px 10px 72px;
+      min-height: 190px;
       overflow-x: auto;
     }
     .timeline-track {
@@ -918,44 +918,68 @@
       }
     }
     .timeline-point.pulse-tl { animation: tl-flash 1s ease-out 1; }
-    .timeline-label {
-      position: absolute;
-      top: calc(50% + 18px);
-      transform: translateX(-50%);
-      font-size: 9.5px;
-      font-weight: 800;
-      letter-spacing: .6px;
-      color: rgba(255,255,255,.72);
-      white-space: nowrap;
-      pointer-events: none;
-    }
-    .timeline-id {
+    /* Nodo: callout con tallo + pastilla (ID) + fecha, alternando arriba/abajo */
+    .timeline-node {
       --id-color: #fb923c;
       position: absolute;
-      top: calc(50% - 30px);
-      transform: translateX(-50%) rotate(-22deg);
-      transform-origin: 50% 100%;
+      left: 0;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .timeline-node.above {
+      bottom: calc(50% + 8px);
+      flex-direction: column-reverse; /* bubble arriba, stem baja al punto */
+    }
+    .timeline-node.below {
+      top: calc(50% + 8px);
+      flex-direction: column;          /* stem sale del punto, bubble debajo */
+    }
+    .timeline-stem {
+      width: 2px;
+      height: 26px;
+      background: linear-gradient(to bottom,
+                    color-mix(in srgb, var(--id-color) 15%, transparent),
+                    var(--id-color));
+      box-shadow: 0 0 6px color-mix(in srgb, var(--id-color) 50%, transparent);
+      border-radius: 2px;
+    }
+    .timeline-node.below .timeline-stem {
+      background: linear-gradient(to top,
+                    color-mix(in srgb, var(--id-color) 15%, transparent),
+                    var(--id-color));
+    }
+    .timeline-bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .timeline-node-id {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 9px;
       font-weight: 800;
       letter-spacing: .2px;
       color: #2a0a12;
       background: var(--id-color);
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 999px;
       white-space: nowrap;
-      pointer-events: none;
-      max-width: 160px;
+      max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
-      text-align: center;
       box-shadow:
         0 2px 6px rgba(0,0,0,.35),
         0 0 10px color-mix(in srgb, var(--id-color) 55%, transparent);
     }
-    .timeline-point.is-active + .timeline-label,
-    .timeline-point:hover + .timeline-label {
-      color: #fff;
+    .timeline-node-date {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      color: rgba(255,255,255,.82);
+      white-space: nowrap;
     }
     .timeline-empty {
       text-align: center;
@@ -1923,6 +1947,7 @@
        Modal "En proceso" — lista + calendario + timeline
        ══════════════════════════════════════════════════════════ */
     const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     const DOW   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     // Paleta de identidad por licitación (ciclada por índice)
     const PALETTE = ['#fb923c','#7dd3fc','#6ee7b7','#f9a8d4','#c4b5fd','#fde047','#fca5a5','#f7d98b'];
@@ -2219,9 +2244,10 @@
       const span = Math.max(1, maxT - minT);
       const pad = 0.06; // 6% de margen en cada extremo
 
-      dated.forEach(item => {
+      dated.forEach((item, i) => {
         const t   = item.fechaDate.getTime();
         const pct = span === 0 ? 50 : (pad * 100) + ((t - minT) / span) * (100 - pad * 200);
+        const pos = i % 2 === 0 ? 'above' : 'below';
 
         const point = document.createElement('div');
         point.className = 'timeline-point';
@@ -2229,29 +2255,30 @@
         point.style.left = pct + '%';
         point.style.setProperty('--pt-color', item.color);
         point.title = `${item.id} — ${item.fechaStr}`;
-
-        const label = document.createElement('div');
-        label.className = 'timeline-label';
-        label.style.left = pct + '%';
-        const d = item.fechaDate;
-        label.textContent = `${String(d.getDate()).padStart(2,'0')} ${MESES[d.getMonth()].slice(0,3)} ${d.getFullYear()}`;
-
-        const id = document.createElement('div');
-        id.className = 'timeline-id';
-        id.style.left = pct + '%';
-        id.style.setProperty('--id-color', item.color);
-        id.textContent = shortId(item.id);
-        id.title = item.id;
-
         point.addEventListener('mouseenter', () => setActive(item.idx));
         point.addEventListener('click', () => {
           setActive(item.idx);
           focusCard(item.idx);
         });
 
-        track.appendChild(id);
+        const d = item.fechaDate;
+        const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
+
+        const node = document.createElement('div');
+        node.className = `timeline-node ${pos}`;
+        node.style.left = pct + '%';
+        node.style.setProperty('--id-color', item.color);
+        // Orden en DOM siempre: stem + bubble; flex-direction invierte para 'above'
+        node.innerHTML = `
+          <div class="timeline-stem"></div>
+          <div class="timeline-bubble">
+            <div class="timeline-node-id" title="${item.id}">${shortId(item.id)}</div>
+            <div class="timeline-node-date">${dateStr}</div>
+          </div>
+        `;
+
         track.appendChild(point);
-        track.appendChild(label);
+        track.appendChild(node);
       });
 
       mxTimeline.appendChild(track);
