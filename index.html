@@ -525,8 +525,8 @@
     .modal-toast {
       position: fixed;
       left: 50%;
-      bottom: 30px;
-      transform: translateX(-50%) translateY(14px);
+      top: 30px;
+      transform: translateX(-50%) translateY(-14px);
       background: linear-gradient(180deg, #4a1422 0%, #2a0a12 100%);
       color: #fdba74;
       padding: 11px 20px;
@@ -1995,7 +1995,7 @@
     function extractProceso(acc) {
       const facet = acc.querySelector('.facet--proceso');
       if (!facet) return [];
-      return Array.from(facet.querySelectorAll('.proc-card')).map((card, idx) => {
+      const raw = Array.from(facet.querySelectorAll('.proc-card')).map(card => {
         const title = card.querySelector('.proc-title')?.textContent.trim() || '';
         const idEl  = card.querySelector('.proc-id');
         const id    = idEl?.textContent.trim() || '';
@@ -2004,13 +2004,27 @@
         const metaVal  = metaStr.replace(/^.*?:\s*/, '');
         const fechaDate = parseFallo(metaVal);
         return {
-          idx, title, id, href,
+          title, id, href,
           fechaStr:   fechaDate ? metaVal : '',
           estatusStr: !fechaDate && metaVal ? metaVal : '',
-          fechaDate,
-          color: PALETTE[idx % PALETTE.length]
+          fechaDate
         };
       });
+
+      // Los que NO tienen fecha de fallo caen al final; los que sí, ordenados por fecha ascendente
+      raw.sort((a, b) => {
+        if (a.fechaDate && b.fechaDate) return a.fechaDate - b.fechaDate;
+        if (a.fechaDate) return -1;
+        if (b.fechaDate) return 1;
+        return 0;
+      });
+
+      // Re-asignamos idx y color después del sort para que la paleta siga el orden visual
+      return raw.map((item, idx) => ({
+        ...item,
+        idx,
+        color: PALETTE[idx % PALETTE.length]
+      }));
     }
 
     // Acorta el ID: recorta todo hasta después del "999-" (aparezca donde aparezca).
@@ -2050,10 +2064,9 @@
     function focusDateViews(idx) {
       const item = procState.items[idx];
 
-      // Sin fecha de fallo: avisa y manda hacia la sección del timeline
+      // Sin fecha de fallo: solo avisa arriba, sin mover el scroll
       if (!item?.fechaDate) {
         showToast('Esta licitación no tiene fecha de fallo asignada');
-        smoothScrollTo(mxTimeline.closest('.msection'), 'start');
         return;
       }
 
