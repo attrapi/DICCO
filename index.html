@@ -1782,14 +1782,16 @@
 
       </div>
     </div>
+  </div>
 
-    <div class="modal-toast" id="modal-toast" role="status" aria-live="polite">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 9v4M12 17v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-      </svg>
-      <span class="modal-toast-text">—</span>
-    </div>
+  <!-- Toast global: fuera del overlay para que position:fixed quede relativo al viewport
+       (el overlay usa backdrop-filter, que crea containing block para sus fixed descendants) -->
+  <div class="modal-toast" id="modal-toast" role="status" aria-live="polite">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 9v4M12 17v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+    <span class="modal-toast-text">—</span>
   </div>
 
   <script>
