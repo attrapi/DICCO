@@ -2561,6 +2561,9 @@
       // ── Área scrolleable: meses como columnas + track con puntos ──────
       const scroll = document.createElement('div');
       scroll.className = 'timeline-scroll';
+      // Insertamos primero para poder medir su ancho visible y hacer que
+      // cada mes ocupe un "pantallazo" completo.
+      mxTimeline.appendChild(scroll);
 
       // Lista ordenada de meses entre el primer y el último fallo
       const first = dated[0].fechaDate;
@@ -2573,8 +2576,9 @@
         cur.setMonth(cur.getMonth() + 1);
       }
 
-      const MONTH_W = 360;                          // px por mes
-      const totalW = months.length * MONTH_W;
+      // 1 mes = 1 pantallazo (ancho visible del área scrolleable)
+      const MONTH_W = Math.max(360, scroll.clientWidth);
+      const totalW  = months.length * MONTH_W;
 
       // Cabecera con los nombres de mes
       const monthsRow = document.createElement('div');
@@ -2643,7 +2647,6 @@
       });
 
       scroll.appendChild(track);
-      mxTimeline.appendChild(scroll);
 
       // ── Flechas prev/next para navegar entre meses ────────────────────
       const prev = document.createElement('button');
