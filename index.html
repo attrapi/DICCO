@@ -2626,7 +2626,14 @@
         point.addEventListener('mouseenter', () => setActive(item.idx));
         point.addEventListener('click', () => {
           setActive(item.idx);
-          focusCard(item.idx);
+          // Ir a la celda del calendario que le corresponde y palparla
+          let firstCell = null;
+          mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
+            const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
+            if (arr.includes(item.idx) && !firstCell) firstCell = cell;
+          });
+          smoothScrollTo(firstCell || mxCalendar.closest('.msection'), 'center');
+          setTimeout(() => pulse(firstCell, 'pulse-cal'), 320);
         });
 
         const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
