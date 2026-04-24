@@ -782,6 +782,17 @@
       letter-spacing: .25px;
       min-height: 1.1em;
     }
+    /* Texto del estatus cuando la licitación aún no tiene fecha de fallo —
+       se muestra multilinea con tipografía legible en la columna derecha. */
+    .modal-list .proc-card-status-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,.82);
+      line-height: 1.38;
+      letter-spacing: .1px;
+      max-width: 220px;
+      white-space: normal;
+    }
     @media (max-width: 760px) {
       .modal-list .proc-card {
         grid-template-columns: 1fr;
@@ -1125,10 +1136,14 @@
       box-sizing: border-box;
       transition: background .14s, border-color .14s, opacity .14s;
     }
-    .timeline-legend-item:hover,
-    .timeline-legend-item.is-active {
+    .timeline-legend-item:hover {
       background: rgba(255,255,255,.06);
-      border-color: color-mix(in srgb, var(--id-color) 40%, transparent);
+      border-color: rgba(255,255,255,.18);
+    }
+    /* is-active NO colorea — el único feedback del seleccionado es el pulso
+       del óvalo "Fallo" cuando se hace click en el número de contrato. */
+    .timeline-legend-item.is-active {
+      background: rgba(255,255,255,.05);
     }
     .timeline-legend-item.is-filtered-off { opacity: .38; }
     .timeline-legend-item.is-filtered-off:hover { opacity: .55; }
@@ -1265,10 +1280,8 @@
       z-index: 1;
       transition: opacity .15s, height .15s;
     }
-    .timeline-projection.is-active {
-      opacity: .6;
-      height: 8px;
-    }
+    /* is-active ya no engrosa ni sube opacidad — solo el pulso del óvalo
+       indica la selección. */
     .timeline-projection.is-hidden { display: none !important; }
 
     /* Botones de navegación por mes */
@@ -1335,8 +1348,9 @@
       cursor: pointer;
       transition: transform .15s, border-color .15s, box-shadow .15s;
     }
-    .timeline-node-id:hover,
-    .timeline-node.is-active .timeline-node-id {
+    /* El óvalo solo se resalta al pasar el mouse. La selección (is-active)
+       no lo agranda — la palpitación del click es el único feedback visual. */
+    .timeline-node-id:hover {
       transform: scale(1.12);
       border-color: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,.45);
@@ -1385,7 +1399,7 @@
       opacity: .5;
       transition: opacity .15s;
     }
-    .timeline-drop.is-active { opacity: 1; }
+    /* is-active ya no sube opacidad — la línea punteada se mantiene tenue. */
     .timeline-drop.is-hidden { display: none !important; }
 
     /* Etiqueta de fecha al pie del eje, alineada con el punto y su
@@ -2753,6 +2767,69 @@
       return m ? m[1] : id;
     }
 
+    // Cuenta items en una lista "a, b, c y d" (separadores: coma y última " y ").
+    function countListItems(list) {
+      const parts = list.split(/,\s*/).map(p => p.trim()).filter(Boolean);
+      if (!parts.length) return 0;
+      const last = parts[parts.length - 1];
+      const splitY = last.split(/\s+y\s+/i);
+      // Solo dividimos la ÚLTIMA entrada por " y " (para no contar mal elementos
+      // que llevan " y " en su nombre, p.ej. "Talleres y Cocheras García").
+      if (splitY.length >= 2) return parts.length - 1 + splitY.length;
+      return parts.length;
+    }
+
+    // Resumen del objeto para mostrar en la lista del modal. El título completo
+    // queda disponible como tooltip (title=""). Reglas clave:
+    //  • "Supervisión, Control y Seguimiento para/de" → "SE para/de"
+    //  • "Tren de Pasajeros X – Y" → "Tren X–Y"
+    //  • "las Estaciones Ferroviarias a, b, … y z, del Tren …" → "de N estaciones del Tren …"
+    //  • "los Edificios Auxiliares Ferroviarios …, del Tren …" → "de N edificios auxiliares del Tren …"
+    //  • "Zona Metropolitana de Monterrey" → "ZMM"
+    //  • "Segmento(s)" → "Seg(s)."
+    function summarizeTitle(s) {
+      if (!s) return '';
+      let t = s.trim().replace(/\s+/g, ' ');
+
+      // SE (Supervisión Externa = Supervisión, Control y Seguimiento)
+      t = t.replace(/^Supervisión,?\s*Control\s+y\s+Seguimiento\s+para\s+(?:la\s+|el\s+|los\s+|las\s+)?/i, 'SE para ');
+      t = t.replace(/^Supervisión,?\s*Control\s+y\s+Seguimiento\s+de\s+(?:la\s+|el\s+|los\s+|las\s+)?/i, 'SE de ');
+
+      // Tren de Pasajeros → Tren
+      t = t.replace(/Tren\s+de\s+Pasajeros\s+/g, 'Tren ');
+
+      // Zona Metropolitana de Monterrey → ZMM
+      t = t.replace(/Zona\s+Metropolitana\s+de\s+Monterrey/gi, 'ZMM');
+
+      // Contar estaciones: "…las Estaciones Ferroviarias <lista>, del Tren …"
+      t = t.replace(
+        /(?:de\s+)?las?\s+Estaciones\s+Ferroviarias\s+(.+?),?\s+del\s+Tren\b/i,
+        (_m, list) => `de ${countListItems(list)} estaciones del Tren`
+      );
+
+      // Contar edificios auxiliares
+      t = t.replace(
+        /(?:de\s+)?los?\s+Edificios\s+Auxiliares\s+Ferroviarios?\s+(.+?),?\s+del\s+Tren\b/i,
+        (_m, list) => `de ${countListItems(list)} edificios auxiliares del Tren`
+      );
+
+      // Tras "SE para/de", bajar a minúsculas "Construcción y Diseño"
+      t = t.replace(/(SE\s+(?:para|de)\s+)(?:la\s+)?Construcción\s+y\s+Diseño/gi, '$1construcción y diseño');
+      t = t.replace(/(SE\s+(?:para|de)\s+)(?:la\s+)?Construcción\s+de\b/gi, '$1construcción de');
+
+      // Segmento(s) abreviados
+      t = t.replace(/\bSegmentos\b/g, 'Segs.');
+      t = t.replace(/\bSegmento\b/g, 'Seg.');
+
+      // Colapsar " – " (en-dash con espacios) → "–"
+      t = t.replace(/\s+–\s+/g, '–');
+
+      // Primera letra en mayúscula
+      t = t.charAt(0).toUpperCase() + t.slice(1);
+
+      return t;
+    }
+
     // Pulso: re-aplica una clase con reflow forzado y se auto-retira (animaciones de 1s)
     function pulse(el, cls, ms = 1100) {
       if (!el) return;
@@ -2917,9 +2994,18 @@
           `;
         }).join('');
 
+        const resumen = summarizeTitle(item.title);
+        const statusHtml = item.fechaStr
+          ? `<div class="proc-card-status-fallo">Fallo</div>
+             <div class="proc-card-status-value">${item.fechaStr}</div>`
+          : item.estatusStr
+            ? `<div class="proc-card-status-label">Estatus</div>
+               <div class="proc-card-status-text">${item.estatusStr}</div>`
+            : '';
+
         card.innerHTML = `
           <div class="proc-card-main">
-            <div class="proc-title">${item.title}</div>
+            <div class="proc-title" title="${item.title.replace(/"/g, '&quot;')}">${resumen}</div>
             <div class="proc-id-row">
               <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -2928,10 +3014,7 @@
               <a class="proc-id" href="${item.href}" target="_blank" rel="noopener noreferrer">${item.id}</a>
             </div>
           </div>
-          <div class="proc-card-status">
-            ${item.fechaStr ? `<div class="proc-card-status-fallo">Fallo</div>` : ''}
-            <div class="proc-card-status-value">${item.fechaStr || ''}</div>
-          </div>
+          <div class="proc-card-status">${statusHtml}</div>
           <div class="proc-card-stages">${stagesHtml}</div>
         `;
         card.addEventListener('mouseenter', () => setActive(item.idx));
