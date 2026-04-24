@@ -716,48 +716,36 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 7px 5px;
+      justify-content: center;
+      gap: 5px;
+      padding: 10px 7px;
       border-radius: 8px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      border: 1px dashed rgba(255,255,255,.22);
       text-align: center;
       min-width: 0;
+      min-height: 54px;
     }
-    .stage-item.is-fallo {
+    /* Etapas con estatus definido: borde sólido tintado del color de la
+       licitación (mismo tratamiento que tiene Fallo cuando hay fecha). */
+    .stage-item.has-value {
       background: color-mix(in srgb, var(--card-color) 14%, rgba(255,255,255,.03));
-      border-color: color-mix(in srgb, var(--card-color) 48%, transparent);
-    }
-    .stage-num {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 17px; height: 17px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.18);
-      font-size: 9px;
-      font-weight: 800;
-      color: rgba(255,255,255,.7);
-    }
-    .stage-item.is-fallo .stage-num {
-      background: var(--card-color);
-      border-color: var(--card-color);
-      color: #2a0a12;
+      border: 1px solid color-mix(in srgb, var(--card-color) 50%, transparent);
     }
     .stage-label {
-      font-size: 8.5px;
+      font-size: 9px;
       font-weight: 700;
       text-transform: uppercase;
       color: rgba(255,255,255,.62);
-      letter-spacing: .35px;
+      letter-spacing: .45px;
       line-height: 1.2;
       max-width: 100%;
     }
+    .stage-item.has-value .stage-label { color: rgba(255,255,255,.82); }
     .stage-value {
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: 700;
-      color: rgba(255,255,255,.40);
+      color: rgba(255,255,255,.30);
       font-family: ui-monospace, Menlo, Consolas, monospace;
       letter-spacing: .2px;
       white-space: nowrap;
@@ -765,7 +753,7 @@
       text-overflow: ellipsis;
       max-width: 100%;
     }
-    .stage-item.is-fallo .stage-value {
+    .stage-item.has-value .stage-value {
       color: var(--card-color);
     }
     .modal-list .proc-card-status-label {
@@ -1092,7 +1080,7 @@
       content: '';
       position: absolute;
       right: -1px;
-      top: 50%;
+      top: var(--notch-y, 50%);
       width: 10px;
       height: 2px;
       background: #f7d98b;
@@ -1230,21 +1218,17 @@
 
     .timeline-track {
       position: relative;
-      /* height se asigna dinámicamente en JS según el número de licitaciones */
+      /* height y --axis-y se asignan dinámicamente en JS */
       height: 260px;
-      /* Margen elegido para que el eje central quede exactamente a mitad
-         del scroll (padding-top 14 + months 22 + margin-bottom months 6 +
-         0 top track = 42; necesitamos 42 + trackH/2 = centro del scroll,
-         por lo que el margen inferior tiene que ser 14 + 14 = 28). */
-      margin: 0 0 28px;
+      margin: 0;
       background: transparent;
     }
-    /* Eje central (línea del tiempo) dibujado como ::before para que los
-       elementos interiores se posicionen respecto al track completo. */
+    /* Eje de tiempo (línea amarilla) — ubicado ABAJO de todos los carriles
+       de licitaciones, mediante la variable --axis-y (px) que el JS calcula. */
     .timeline-track::before {
       content: '';
       position: absolute;
-      top: 50%;
+      top: var(--axis-y, 50%);
       left: 0;
       right: 0;
       height: 2px;
@@ -1405,6 +1389,43 @@
     /* Filtro: oculta puntos/nodos cuyo checkbox está desmarcado */
     .timeline-point.is-hidden,
     .timeline-node.is-hidden { display: none !important; }
+
+    /* Línea vertical punteada que baja de cada punto hasta el eje del tiempo */
+    .timeline-drop {
+      --drop-color: #fb923c;
+      position: absolute;
+      width: 0;
+      border-left: 1.5px dashed color-mix(in srgb, var(--drop-color) 55%, rgba(255,255,255,.28));
+      transform: translateX(-50%);
+      z-index: 1;
+      pointer-events: none;
+      opacity: .5;
+      transition: opacity .15s;
+    }
+    .timeline-drop.is-active { opacity: 1; }
+    .timeline-drop.is-hidden { display: none !important; }
+
+    /* Etiqueta de fecha al pie del eje, alineada con el punto y su
+       línea punteada. */
+    .timeline-date-mark {
+      --date-color: #fb923c;
+      position: absolute;
+      transform: translateX(-50%);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      font-weight: 700;
+      color: #fff1c8;
+      letter-spacing: .3px;
+      white-space: nowrap;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--date-color) 18%, rgba(0,0,0,.45));
+      border: 1px solid color-mix(in srgb, var(--date-color) 45%, rgba(255,255,255,.08));
+      pointer-events: none;
+      z-index: 3;
+      box-shadow: 0 1px 3px rgba(0,0,0,.35);
+    }
+    .timeline-date-mark.is-hidden { display: none !important; }
 
     /* ── Botón "Reporte" dentro del modal ── */
     .modal-report-btn {
@@ -2444,7 +2465,7 @@
 
         <section class="msection">
           <div class="msection-head msection-head--split">
-            <div class="msection-title">Licitaciones</div>
+            <div class="msection-title">Procedimientos de contratación</div>
             <div class="msection-title msection-title--estatus">Estatus</div>
           </div>
           <div class="modal-list" id="mx-list"></div>
@@ -2823,7 +2844,7 @@
     // Aplica el estado oculto/visible a puntos, nodos, barras de proyección
     // y filas de la leyenda
     function applyFilterVisibility() {
-      mxTimeline.querySelectorAll('.timeline-point[data-idx], .timeline-node[data-idx], .timeline-projection[data-idx]').forEach(el => {
+      mxTimeline.querySelectorAll('.timeline-point[data-idx], .timeline-node[data-idx], .timeline-projection[data-idx], .timeline-drop[data-idx], .timeline-date-mark[data-idx]').forEach(el => {
         el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
       });
       mxTimeline.querySelectorAll('.timeline-legend-item[data-idx]').forEach(row => {
@@ -2866,6 +2887,9 @@
       mxTimeline.querySelectorAll('.timeline-projection').forEach(el => {
         el.classList.toggle('is-active', +el.dataset.idx === idx);
       });
+      mxTimeline.querySelectorAll('.timeline-drop').forEach(el => {
+        el.classList.toggle('is-active', +el.dataset.idx === idx);
+      });
       mxTimeline.querySelectorAll('.timeline-legend-item').forEach(el => {
         el.classList.toggle('is-active', +el.dataset.idx === idx);
       });
@@ -2897,12 +2921,14 @@
         card.style.setProperty('--card-color', item.color);
         const stagesHtml = STAGES.map((name, si) => {
           const isFallo = si === STAGES.length - 1;
-          const value = isFallo ? (item.fechaStr || '—') : '—';
+          // Por ahora solo Fallo tiene dato. El resto queda vacío hasta que
+          // se llene la información, y muestra borde punteado.
+          const value = isFallo ? item.fechaStr : '';
+          const hasValue = !!value;
           return `
-            <div class="stage-item${isFallo ? ' is-fallo' : ''}">
-              <div class="stage-num">${si + 1}</div>
+            <div class="stage-item${hasValue ? ' has-value' : ''}">
               <div class="stage-label">${name}</div>
-              <div class="stage-value">${value}</div>
+              ${hasValue ? `<div class="stage-value">${value}</div>` : ''}
             </div>
           `;
         }).join('');
@@ -3149,11 +3175,23 @@
       const LANE_H     = 26;  // debe coincidir con la altura de .timeline-legend-item
       const LANE_GAP   = 5;   // debe coincidir con el gap del .timeline-legend-list
       const TRACK_VPAD = 2;   // leve margen superior/inferior dentro del track
+      const AXIS_GAP   = 14;  // espacio entre el último carril y el eje
+      const DATE_ROW_H = 26;  // alto reservado bajo el eje para las etiquetas de fecha
 
-      const trackH = TRACK_VPAD * 2
-                   + dated.length * LANE_H
-                   + Math.max(0, dated.length - 1) * LANE_GAP;
+      const lanesAreaH = TRACK_VPAD * 2
+                       + dated.length * LANE_H
+                       + Math.max(0, dated.length - 1) * LANE_GAP;
+      const axisY  = lanesAreaH + AXIS_GAP;
+      const trackH = axisY + DATE_ROW_H;
+
       track.style.height = trackH + 'px';
+      track.style.setProperty('--axis-y', axisY + 'px');
+
+      // Colocar la marca amarilla (::after) de la leyenda al mismo Y que el eje.
+      // En coords relativas al container .timeline: padding-top 14 + months 22
+      // + margin-bottom months 6 + axisY_en_track  = 42 + axisY.
+      const notchY = 42 + axisY;
+      legend.style.setProperty('--notch-y', notchY + 'px');
 
       // Separadores verticales entre meses (punteado a lo largo del track)
       months.forEach((_, mi) => {
@@ -3186,6 +3224,16 @@
         proj.style.setProperty('--proj-color', item.color);
         track.appendChild(proj);
 
+        // Línea punteada vertical desde el punto hasta el eje
+        const drop = document.createElement('div');
+        drop.className = 'timeline-drop' + (hidden ? ' is-hidden' : '');
+        drop.dataset.idx = item.idx;
+        drop.style.left = leftPx + 'px';
+        drop.style.top = laneCenter + 'px';
+        drop.style.height = Math.max(0, axisY - laneCenter) + 'px';
+        drop.style.setProperty('--drop-color', item.color);
+        track.appendChild(drop);
+
         // Punto al final de la barra
         const point = document.createElement('div');
         point.className = 'timeline-point' + (hidden ? ' is-hidden' : '');
@@ -3206,8 +3254,7 @@
           setTimeout(() => pulse(firstCell, 'pulse-cal'), 320);
         });
 
-        // Etiqueta "Fallo + fecha" inline a la derecha del punto
-        const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
+        // Etiqueta "Fallo" (sin fecha) a la derecha del punto en el carril
         const node = document.createElement('div');
         node.className = 'timeline-node' + (hidden ? ' is-hidden' : '');
         node.dataset.idx = item.idx;
@@ -3216,11 +3263,21 @@
         node.style.setProperty('--id-color', item.color);
         node.innerHTML = `
           <div class="timeline-node-id" title="${item.id}">Fallo</div>
-          <div class="timeline-node-date">${dateStr}</div>
         `;
+
+        // Etiqueta de fecha bajo el eje, alineada con la línea punteada
+        const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
+        const dateMark = document.createElement('div');
+        dateMark.className = 'timeline-date-mark' + (hidden ? ' is-hidden' : '');
+        dateMark.dataset.idx = item.idx;
+        dateMark.style.left = leftPx + 'px';
+        dateMark.style.top = (axisY + 8) + 'px';
+        dateMark.style.setProperty('--date-color', item.color);
+        dateMark.textContent = dateStr;
 
         track.appendChild(point);
         track.appendChild(node);
+        track.appendChild(dateMark);
       });
 
       scroll.appendChild(track);
@@ -3420,7 +3477,7 @@
         </div>
 
         <div class="pr-section">
-          <div class="pr-section-title">Licitaciones</div>
+          <div class="pr-section-title">Procedimientos de contratación</div>
           ${listHtml}
         </div>
 
