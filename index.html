@@ -1094,7 +1094,7 @@
     .timeline-months {
       display: flex;
       height: 22px;
-      margin-bottom: 20px;
+      margin-bottom: 6px;
     }
     .timeline-month {
       flex: 0 0 auto;
@@ -1115,20 +1115,65 @@
 
     .timeline-track {
       position: relative;
+      /* height se asigna dinámicamente en JS según el número de licitaciones */
+      height: 260px;
+      /* Margen elegido para que el eje central quede exactamente a mitad
+         del scroll (padding-top 14 + months 22 + margin-bottom months 6 +
+         0 top track = 42; necesitamos 42 + trackH/2 = centro del scroll,
+         por lo que el margen inferior tiene que ser 14 + 14 = 28). */
+      margin: 0 0 28px;
+      background: transparent;
+    }
+    /* Eje central (línea del tiempo) dibujado como ::before para que los
+       elementos interiores se posicionen respecto al track completo. */
+    .timeline-track::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
       height: 2px;
+      transform: translateY(-50%);
       background: linear-gradient(90deg, rgba(251,146,60,.15), rgba(247,217,139,.55), rgba(251,146,60,.55), rgba(247,217,139,.55), rgba(251,146,60,.15));
-      margin: 40px 0 24px;
       border-radius: 2px;
+      pointer-events: none;
+      z-index: 2;
     }
     /* Líneas verticales punteadas marcando inicio de cada mes en el track */
     .timeline-month-sep {
       position: absolute;
-      top: -40px;
-      bottom: -70px;
+      top: 0;
+      bottom: 0;
       width: 0;
       border-left: 1px dashed rgba(255,255,255,.10);
       pointer-events: none;
+      z-index: 1;
     }
+
+    /* Barra de proyección — un "camino" de poca opacidad que va desde el
+       inicio del track hasta el punto de fallo de cada licitación. Se
+       apila arriba o abajo del eje central alternando. */
+    .timeline-projection {
+      --proj-color: #fb923c;
+      --proj-off: 36px;
+      position: absolute;
+      left: 0;
+      height: 5px;
+      background: var(--proj-color);
+      opacity: .20;
+      border-radius: 0 3px 3px 0;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity .15s, height .15s;
+    }
+    .timeline-projection.above { top: calc(50% - var(--proj-off)); }
+    .timeline-projection.below { top: calc(50% + var(--proj-off)); }
+    .timeline-projection.is-active {
+      opacity: .55;
+      height: 6px;
+    }
+    .timeline-projection.is-hidden { display: none !important; }
 
     /* Botones de navegación por mes */
     .timeline-nav {
@@ -1174,6 +1219,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.35);
       cursor: pointer;
       transition: transform .15s, border-color .15s;
+      z-index: 3;
     }
     .timeline-point:hover,
     .timeline-point.is-active {
@@ -1203,13 +1249,14 @@
     /* Nodo: callout con tallo + pastilla (ID) + fecha, alternando arriba/abajo */
     .timeline-node {
       --id-color: #fb923c;
+      --stem-h: 26px;
       position: absolute;
       left: 0;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
       pointer-events: none;
-      z-index: 3;
+      z-index: 4;
     }
     .timeline-node.above {
       bottom: calc(50% + 8px);
@@ -1221,7 +1268,7 @@
     }
     .timeline-stem {
       width: 2px;
-      height: 26px;
+      height: var(--stem-h);
       background: var(--id-color);
       opacity: .65;
       border-radius: 2px;
@@ -2665,12 +2712,10 @@
       setTimeout(() => pulse(card, 'pulse-card'), 320);
     }
 
-    // Aplica el estado oculto/visible a puntos, nodos y filas de la leyenda
+    // Aplica el estado oculto/visible a puntos, nodos, barras de proyección
+    // y filas de la leyenda
     function applyFilterVisibility() {
-      mxTimeline.querySelectorAll('.timeline-point[data-idx]').forEach(el => {
-        el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
-      });
-      mxTimeline.querySelectorAll('.timeline-node[data-idx]').forEach(el => {
+      mxTimeline.querySelectorAll('.timeline-point[data-idx], .timeline-node[data-idx], .timeline-projection[data-idx]').forEach(el => {
         el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
       });
       mxTimeline.querySelectorAll('.timeline-legend-item[data-idx]').forEach(row => {
@@ -2708,6 +2753,9 @@
         el.classList.toggle('is-active', idxs.includes(idx));
       });
       mxTimeline.querySelectorAll('.timeline-point').forEach(el => {
+        el.classList.toggle('is-active', +el.dataset.idx === idx);
+      });
+      mxTimeline.querySelectorAll('.timeline-projection').forEach(el => {
         el.classList.toggle('is-active', +el.dataset.idx === idx);
       });
       mxTimeline.querySelectorAll('.timeline-legend-item').forEach(el => {
@@ -2968,12 +3016,34 @@
       });
       scroll.appendChild(monthsRow);
 
-      // Track con la línea amarilla
+      // Track contenedor — el eje amarillo es ::before, los puntos/nodos
+      // y las barras de proyección van adentro.
       const track = document.createElement('div');
       track.className = 'timeline-track';
       track.style.width = totalW + 'px';
 
-      // Separadores verticales entre meses (puntitos dentro del área)
+      // Parámetros de apilamiento vertical (niveles arriba/abajo del eje).
+      // Los primeros dos items (uno arriba, uno abajo) usan el offset más
+      // pequeño pero suficiente para que el texto no toque la línea central.
+      const BASE_STEM    = 26;  // altura del stem del primer nivel
+      const LEVEL_STEP   = 38;  // lo que crece el stem por cada nivel extra
+      const POINT_GAP    = 10;  // espacio libre entre eje y primer elemento
+      const BUBBLE_ROOM  = 46;  // espacio reservado para la burbuja (ID + fecha)
+
+      // Niveles necesarios a cada lado (arriba, abajo)
+      const countAbove = Math.ceil(dated.length / 2);
+      const countBelow = Math.floor(dated.length / 2);
+      const maxLevelAbove = Math.max(0, countAbove - 1);
+      const maxLevelBelow = Math.max(0, countBelow - 1);
+      const maxStemAbove = BASE_STEM + maxLevelAbove * LEVEL_STEP;
+      const maxStemBelow = BASE_STEM + maxLevelBelow * LEVEL_STEP;
+
+      // Altura del track — lo suficiente para acomodar todas las burbujas a
+      // ambos lados del eje sin recortarlas.
+      const trackH = 2 * (POINT_GAP + Math.max(maxStemAbove, maxStemBelow) + BUBBLE_ROOM);
+      track.style.height = trackH + 'px';
+
+      // Separadores verticales entre meses (punteado a lo largo del track)
       months.forEach((_, mi) => {
         if (mi === 0) return;
         const sep = document.createElement('div');
@@ -2991,7 +3061,20 @@
         // Dejamos un margen interno del 8% dentro del mes para que el punto no pegue al separador
         const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
         const pos = i % 2 === 0 ? 'above' : 'below';
+        const level = Math.floor(i / 2);
+        const stemH = BASE_STEM + level * LEVEL_STEP;
+        const projOff = POINT_GAP + stemH;  // distancia del eje al centro de la barra
         const hidden = procState.hiddenIdxs.has(item.idx);
+
+        // Barra de proyección (camino) desde el inicio del track hasta el punto
+        const proj = document.createElement('div');
+        proj.className = `timeline-projection ${pos}` + (hidden ? ' is-hidden' : '');
+        proj.dataset.idx = item.idx;
+        proj.style.left = '0';
+        proj.style.width = leftPx + 'px';
+        proj.style.setProperty('--proj-color', item.color);
+        proj.style.setProperty('--proj-off', projOff + 'px');
+        track.appendChild(proj);
 
         const point = document.createElement('div');
         point.className = 'timeline-point' + (hidden ? ' is-hidden' : '');
@@ -3018,6 +3101,7 @@
         node.dataset.idx = item.idx;
         node.style.left = leftPx + 'px';
         node.style.setProperty('--id-color', item.color);
+        node.style.setProperty('--stem-h', stemH + 'px');
         node.innerHTML = `
           <div class="timeline-stem"></div>
           <div class="timeline-bubble">
