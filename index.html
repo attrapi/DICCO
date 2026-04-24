@@ -782,17 +782,6 @@
       letter-spacing: .25px;
       min-height: 1.1em;
     }
-    /* Texto del estatus cuando la licitación aún no tiene fecha de fallo —
-       se muestra multilinea con tipografía legible en la columna derecha. */
-    .modal-list .proc-card-status-text {
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(255,255,255,.82);
-      line-height: 1.38;
-      letter-spacing: .1px;
-      max-width: 220px;
-      white-space: normal;
-    }
     @media (max-width: 760px) {
       .modal-list .proc-card {
         grid-template-columns: 1fr;
@@ -979,7 +968,12 @@
       cursor: pointer;
       font-weight: 800;
       display: block;
-      padding: 3px 5px 4px;
+      padding: 4px 6px 6px;
+      /* Se libera la relación 1:1 para que la celda crezca verticalmente con
+         la lista que va abajo de cada licitación (objeto, estatus, etc.). */
+      aspect-ratio: auto;
+      min-height: 80px;
+      align-self: start;
     }
     .cal-day.has-event:hover {
       background: rgba(255,255,255,.06);
@@ -1047,6 +1041,43 @@
       padding-left: 2px;
     }
     .cal-day-id.more::before { display: none; }
+
+    /* Lista abajo de cada licitación: objeto resumido, estatus, y cualquier
+       otro campo que se agregue en el futuro. */
+    .cal-day-id-items {
+      --id-color: #fb923c;
+      list-style: none;
+      margin: 2px 0 4px 11px;
+      padding: 2px 0 2px 7px;
+      border-left: 2px solid color-mix(in srgb, var(--id-color) 45%, transparent);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cal-day-id-items li {
+      display: block;
+      font-size: 9px;
+      font-weight: 500;
+      line-height: 1.32;
+      color: rgba(255,255,255,.78);
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .cal-day-id-lbl {
+      display: inline-block;
+      font-size: 7.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+      margin-right: 4px;
+    }
+    .cal-day-id-val {
+      color: rgba(255,255,255,.88);
+      font-weight: 600;
+    }
 
     /* Flash amarillo canario (suave) — 1s total */
     @keyframes cal-flash {
@@ -1136,14 +1167,10 @@
       box-sizing: border-box;
       transition: background .14s, border-color .14s, opacity .14s;
     }
-    .timeline-legend-item:hover {
-      background: rgba(255,255,255,.06);
-      border-color: rgba(255,255,255,.18);
-    }
-    /* is-active NO colorea — el único feedback del seleccionado es el pulso
-       del óvalo "Fallo" cuando se hace click en el número de contrato. */
+    .timeline-legend-item:hover,
     .timeline-legend-item.is-active {
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.06);
+      border-color: color-mix(in srgb, var(--id-color) 40%, transparent);
     }
     .timeline-legend-item.is-filtered-off { opacity: .38; }
     .timeline-legend-item.is-filtered-off:hover { opacity: .55; }
@@ -1348,9 +1375,8 @@
       cursor: pointer;
       transition: transform .15s, border-color .15s, box-shadow .15s;
     }
-    /* El óvalo solo se resalta al pasar el mouse. La selección (is-active)
-       no lo agranda — la palpitación del click es el único feedback visual. */
-    .timeline-node-id:hover {
+    .timeline-node-id:hover,
+    .timeline-node.is-active .timeline-node-id {
       transform: scale(1.12);
       border-color: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,.45);
@@ -2779,55 +2805,42 @@
       return parts.length;
     }
 
-    // Resumen del objeto para mostrar en la lista del modal. El título completo
-    // queda disponible como tooltip (title=""). Reglas clave:
+    // Resumen del objeto para mostrar en el calendario (abajo del ID corto
+    // de la licitación). El título completo queda disponible como tooltip.
     //  • "Supervisión, Control y Seguimiento para/de" → "SE para/de"
     //  • "Tren de Pasajeros X – Y" → "Tren X–Y"
-    //  • "las Estaciones Ferroviarias a, b, … y z, del Tren …" → "de N estaciones del Tren …"
-    //  • "los Edificios Auxiliares Ferroviarios …, del Tren …" → "de N edificios auxiliares del Tren …"
+    //  • Lista de estaciones/edificios → "N estaciones" / "N edificios auxiliares"
     //  • "Zona Metropolitana de Monterrey" → "ZMM"
     //  • "Segmento(s)" → "Seg(s)."
     function summarizeTitle(s) {
       if (!s) return '';
       let t = s.trim().replace(/\s+/g, ' ');
 
-      // SE (Supervisión Externa = Supervisión, Control y Seguimiento)
+      // SE (Supervisión Externa)
       t = t.replace(/^Supervisión,?\s*Control\s+y\s+Seguimiento\s+para\s+(?:la\s+|el\s+|los\s+|las\s+)?/i, 'SE para ');
       t = t.replace(/^Supervisión,?\s*Control\s+y\s+Seguimiento\s+de\s+(?:la\s+|el\s+|los\s+|las\s+)?/i, 'SE de ');
 
-      // Tren de Pasajeros → Tren
       t = t.replace(/Tren\s+de\s+Pasajeros\s+/g, 'Tren ');
-
-      // Zona Metropolitana de Monterrey → ZMM
       t = t.replace(/Zona\s+Metropolitana\s+de\s+Monterrey/gi, 'ZMM');
 
-      // Contar estaciones: "…las Estaciones Ferroviarias <lista>, del Tren …"
       t = t.replace(
         /(?:de\s+)?las?\s+Estaciones\s+Ferroviarias\s+(.+?),?\s+del\s+Tren\b/i,
         (_m, list) => `de ${countListItems(list)} estaciones del Tren`
       );
-
-      // Contar edificios auxiliares
       t = t.replace(
         /(?:de\s+)?los?\s+Edificios\s+Auxiliares\s+Ferroviarios?\s+(.+?),?\s+del\s+Tren\b/i,
         (_m, list) => `de ${countListItems(list)} edificios auxiliares del Tren`
       );
 
-      // Tras "SE para/de", bajar a minúsculas "Construcción y Diseño"
       t = t.replace(/(SE\s+(?:para|de)\s+)(?:la\s+)?Construcción\s+y\s+Diseño/gi, '$1construcción y diseño');
       t = t.replace(/(SE\s+(?:para|de)\s+)(?:la\s+)?Construcción\s+de\b/gi, '$1construcción de');
 
-      // Segmento(s) abreviados
       t = t.replace(/\bSegmentos\b/g, 'Segs.');
       t = t.replace(/\bSegmento\b/g, 'Seg.');
 
-      // Colapsar " – " (en-dash con espacios) → "–"
       t = t.replace(/\s+–\s+/g, '–');
 
-      // Primera letra en mayúscula
-      t = t.charAt(0).toUpperCase() + t.slice(1);
-
-      return t;
+      return t.charAt(0).toUpperCase() + t.slice(1);
     }
 
     // Pulso: re-aplica una clase con reflow forzado y se auto-retira (animaciones de 1s)
@@ -2994,18 +3007,9 @@
           `;
         }).join('');
 
-        const resumen = summarizeTitle(item.title);
-        const statusHtml = item.fechaStr
-          ? `<div class="proc-card-status-fallo">Fallo</div>
-             <div class="proc-card-status-value">${item.fechaStr}</div>`
-          : item.estatusStr
-            ? `<div class="proc-card-status-label">Estatus</div>
-               <div class="proc-card-status-text">${item.estatusStr}</div>`
-            : '';
-
         card.innerHTML = `
           <div class="proc-card-main">
-            <div class="proc-title" title="${item.title.replace(/"/g, '&quot;')}">${resumen}</div>
+            <div class="proc-title">${item.title}</div>
             <div class="proc-id-row">
               <svg class="proc-id-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -3014,7 +3018,10 @@
               <a class="proc-id" href="${item.href}" target="_blank" rel="noopener noreferrer">${item.id}</a>
             </div>
           </div>
-          <div class="proc-card-status">${statusHtml}</div>
+          <div class="proc-card-status">
+            ${item.fechaStr ? `<div class="proc-card-status-fallo">Fallo</div>` : ''}
+            <div class="proc-card-status-value">${item.fechaStr || ''}</div>
+          </div>
           <div class="proc-card-stages">${stagesHtml}</div>
         `;
         card.addEventListener('mouseenter', () => setActive(item.idx));
@@ -3099,6 +3106,22 @@
             txt.textContent = shortId(it.id);
             row.appendChild(txt);
             ids.appendChild(row);
+
+            // Lista abajo de la licitación: resumen del objeto y estatus.
+            // Diseñada para ir creciendo (se agregarán más ítems en el futuro).
+            const details = document.createElement('ul');
+            details.className = 'cal-day-id-items';
+            details.style.setProperty('--id-color', it.color);
+            const lines = [
+              `<li><span class="cal-day-id-lbl">Objeto</span><span class="cal-day-id-val">${summarizeTitle(it.title)}</span></li>`
+            ];
+            if (it.fechaStr) {
+              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">Fallo — ${it.fechaStr}</span></li>`);
+            } else if (it.estatusStr) {
+              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">${it.estatusStr}</span></li>`);
+            }
+            details.innerHTML = lines.join('');
+            ids.appendChild(details);
           });
           if (idxs.length > 3) {
             const more = document.createElement('div');
