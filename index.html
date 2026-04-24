@@ -1080,16 +1080,19 @@
       white-space: normal;
       word-break: break-word;
     }
+    .cal-day-id-items li + li { margin-top: 3px; }
+    /* Label arriba, valor en la línea siguiente. */
     .cal-day-id-lbl {
-      display: inline-block;
+      display: block;
       font-size: 7.5px;
       font-weight: 800;
       letter-spacing: 1px;
       text-transform: uppercase;
       color: rgba(255,255,255,.5);
-      margin-right: 4px;
+      margin-bottom: 1px;
     }
     .cal-day-id-val {
+      display: block;
       color: rgba(255,255,255,.88);
       font-weight: 600;
     }
@@ -3152,8 +3155,7 @@
               `<li><span class="cal-day-id-lbl">Objeto</span><span class="cal-day-id-val">${summarizeTitle(it.title)}</span></li>`
             ];
             if (it.fechaStr) {
-              // La fecha de Fallo sola — el día del calendario ya es el Fallo.
-              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">${it.fechaStr}</span></li>`);
+              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">Fallo ${it.fechaStr}</span></li>`);
             } else if (it.estatusStr) {
               lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">${it.estatusStr}</span></li>`);
             }
