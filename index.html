@@ -1259,7 +1259,11 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      @page { size: A4; margin: 14mm 14mm 14mm 14mm; }
+      /* @page margin: lo mantenemos generoso por si el diálogo respeta
+         la configuración "Predeterminado". Además #print-report tiene
+         padding interno para garantizar márgenes aunque el navegador
+         ignore @page (p.ej. si el usuario elige "Ninguno" en el diálogo). */
+      @page { size: A4; margin: 14mm; }
 
       html, body {
         background: #fff !important;
@@ -1277,6 +1281,10 @@
         color: #1a1a1a;
         font-size: 9.5pt;
         line-height: 1.3;
+        /* Padding interno: actúa como red de seguridad cuando el navegador
+           ignora @page { margin } (p. ej. si el usuario elige "Ninguno"). */
+        padding: 6mm 8mm;
+        box-sizing: border-box;
       }
       #print-report .pr-header {
         border-bottom: 1.5px solid #691c32;
@@ -3079,7 +3087,12 @@
         const firstT = dated[0].fechaDate.getTime();
         const lastT  = dated[dated.length - 1].fechaDate.getTime();
         const range  = Math.max(1, lastT - firstT);
-        const pct    = t => (range === 0 ? 50 : ((t - firstT) / range) * 100);
+        // Clamp para que los puntos del primero/último no se salgan del bar
+        const pct = t => {
+          if (range <= 1) return 50;
+          const raw = ((t - firstT) / range) * 100;
+          return Math.max(2, Math.min(98, raw));
+        };
 
         const rowsTl = dated.map(it => {
           const p = pct(it.fechaDate.getTime());
