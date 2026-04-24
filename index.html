@@ -1227,6 +1227,241 @@
       padding: 18px 0;
     }
 
+    /* ── Botón "Reporte" dentro del modal ── */
+    .modal-report-btn {
+      flex-shrink: 0;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(201,146,42,.50);
+      background: rgba(201,146,42,.14);
+      color: #f7d98b;
+      cursor: pointer;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: background .15s, border-color .15s, transform .15s, color .15s;
+    }
+    .modal-report-btn:hover {
+      background: rgba(201,146,42,.26);
+      border-color: rgba(247,217,139,.78);
+      color: #fff1c8;
+      transform: translateY(-1px);
+    }
+    .modal-report-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* Contenedor exclusivo de impresión: oculto en pantalla */
+    #print-report { display: none; }
+
+    /* ── Estilos de impresión ────────────────────────────────────── */
+    @media print {
+      @page { size: A4; margin: 12mm; }
+
+      html, body {
+        background: #fff !important;
+        color: #1a1a1a !important;
+      }
+      body::before { display: none !important; }
+
+      /* Oculta TODO en pantalla salvo el contenedor de impresión */
+      body.is-printing > *:not(#print-report) { display: none !important; }
+      body.is-printing #print-report { display: block !important; }
+
+      /* Tipografía y layout del reporte */
+      #print-report {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        color: #1a1a1a;
+        font-size: 10.5pt;
+        line-height: 1.4;
+      }
+      #print-report .pr-header {
+        border-bottom: 2px solid #691c32;
+        padding-bottom: 10px;
+        margin-bottom: 16px;
+      }
+      #print-report .pr-eyebrow {
+        font-size: 8pt;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #c9922a;
+        margin-bottom: 4px;
+      }
+      #print-report .pr-title {
+        font-size: 16pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #691c32;
+        letter-spacing: .3px;
+        margin-bottom: 4px;
+      }
+      #print-report .pr-sub {
+        font-size: 10pt;
+        color: #555;
+      }
+      #print-report .pr-meta {
+        font-size: 9pt;
+        color: #666;
+        margin-top: 6px;
+      }
+
+      #print-report .pr-section {
+        margin-top: 18px;
+        page-break-inside: avoid;
+      }
+      #print-report .pr-section-title {
+        font-size: 10pt;
+        font-weight: 800;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+        color: #c9922a;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #print-report .pr-section-title::before {
+        content: '';
+        display: inline-block;
+        width: 18px; height: 2px;
+        background: #c9922a;
+        border-radius: 2px;
+      }
+
+      /* Tabla de licitaciones */
+      #print-report table.pr-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+      }
+      #print-report table.pr-table th,
+      #print-report table.pr-table td {
+        border: 1px solid #d8d8d8;
+        padding: 7px 9px;
+        text-align: left;
+        vertical-align: top;
+      }
+      #print-report table.pr-table thead th {
+        background: #f4e9da;
+        color: #691c32;
+        font-size: 8.5pt;
+        font-weight: 800;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+      }
+      #print-report table.pr-table tbody tr { page-break-inside: avoid; }
+      #print-report table.pr-table .pr-color-cell {
+        width: 12px;
+        padding: 0;
+        background: var(--row-color, #c9922a);
+      }
+      #print-report table.pr-table .pr-id {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9pt;
+        color: #8a6716;
+        white-space: nowrap;
+      }
+      #print-report table.pr-table .pr-fallo {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9pt;
+        white-space: nowrap;
+      }
+      #print-report table.pr-table .pr-fallo-empty {
+        color: #888;
+        font-style: italic;
+      }
+
+      /* Línea del tiempo (versión imprimible, tipo Gantt vertical) */
+      #print-report .pr-tl-empty {
+        text-align: center;
+        color: #888;
+        font-style: italic;
+        padding: 10px;
+      }
+      #print-report .pr-tl {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 6px 14px;
+        align-items: center;
+        font-size: 9.5pt;
+      }
+      #print-report .pr-tl-row {
+        display: contents;
+      }
+      #print-report .pr-tl-id {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-weight: 700;
+        color: #1a1a1a;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      #print-report .pr-tl-id::before {
+        content: '';
+        width: 9px; height: 9px; border-radius: 2px;
+        background: var(--row-color, #c9922a);
+        border: 1px solid rgba(0,0,0,.3);
+      }
+      #print-report .pr-tl-bar-wrap {
+        position: relative;
+        height: 10px;
+        background: #f0e5cf;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      #print-report .pr-tl-bar-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 4px 0;
+        background: repeating-linear-gradient(90deg, #ddd 0 1px, transparent 1px 40px);
+      }
+      #print-report .pr-tl-dot {
+        position: absolute;
+        top: 50%;
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        background: var(--row-color, #c9922a);
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+        transform: translate(-50%, -50%);
+      }
+      #print-report .pr-tl-date {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9pt;
+        color: #333;
+        white-space: nowrap;
+      }
+      #print-report .pr-tl-scale {
+        grid-column: 2 / 3;
+        display: flex;
+        justify-content: space-between;
+        font-size: 7.5pt;
+        color: #666;
+        margin-top: 2px;
+        padding-top: 4px;
+        border-top: 1px solid #d8d8d8;
+      }
+      #print-report .pr-footer {
+        margin-top: 20px;
+        font-size: 8pt;
+        color: #999;
+        text-align: center;
+        border-top: 1px solid #ddd;
+        padding-top: 8px;
+      }
+
+      /* Forzar color-adjust para que los fondos/bordes tintados salgan impresos */
+      #print-report, #print-report * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -1970,6 +2205,13 @@
           <div class="modal-title" id="proc-modal-title">—</div>
           <div class="modal-subtitle" id="proc-modal-subtitle"></div>
         </div>
+        <button class="modal-report-btn" type="button" id="proc-modal-report" aria-label="Generar reporte PDF">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M14 3v5h5M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span>Reporte</span>
+        </button>
         <button class="modal-close" type="button" aria-label="Cerrar">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
@@ -1986,7 +2228,7 @@
           <div class="modal-list" id="mx-list"></div>
         </section>
 
-        <section class="msection">
+        <section class="msection" id="proc-calendar-section">
           <div class="msection-head">
             <div class="msection-title">Calendario</div>
             <div class="cal-nav">
@@ -2747,7 +2989,134 @@
       if (procState.calMonth > 11) { procState.calMonth = 0; procState.calYear++; }
       renderCalendar();
     });
+
+    /* ══════════════════════════════════════════════════════════
+       Reporte PDF — licitaciones + línea del tiempo (sin calendario)
+       ══════════════════════════════════════════════════════════ */
+    const printReport  = document.getElementById('print-report');
+    const reportBtn    = document.getElementById('proc-modal-report');
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
+
+    function buildPrintReport() {
+      const role  = modalTitle.textContent.trim();
+      const sub   = modalSubtitle.textContent.trim();
+      const items = procState.items;
+      const dated = items.filter(i => i.fechaDate).sort((a,b) => a.fechaDate - b.fechaDate);
+
+      const today = new Date();
+      const fmt2 = n => String(n).padStart(2,'0');
+      const emisionStr = `${fmt2(today.getDate())}/${fmt2(today.getMonth()+1)}/${today.getFullYear()} ${fmt2(today.getHours())}:${fmt2(today.getMinutes())}`;
+
+      // ─── Tabla de licitaciones ───
+      const rowsHtml = items.length ? items.map((it, i) => `
+        <tr>
+          <td class="pr-color-cell" style="--row-color:${it.color}"></td>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(it.title)}</td>
+          <td class="pr-id">${escapeHtml(it.id)}</td>
+          <td class="pr-fallo ${it.fechaStr ? '' : 'pr-fallo-empty'}">
+            ${it.fechaStr ? escapeHtml(it.fechaStr) : (escapeHtml(it.estatusStr) || 'Sin fecha')}
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="5" style="text-align:center; color:#888; font-style:italic;">Sin procesos registrados</td></tr>`;
+
+      const tableHtml = `
+        <table class="pr-table">
+          <thead>
+            <tr>
+              <th class="pr-color-cell"></th>
+              <th style="width:28px;">#</th>
+              <th>Licitación</th>
+              <th>ID</th>
+              <th>Fallo / Estatus</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      `;
+
+      // ─── Línea del tiempo (horizontal, proporcional al rango real) ───
+      let timelineHtml;
+      if (!dated.length) {
+        timelineHtml = `<div class="pr-tl-empty">Sin fechas de fallo registradas</div>`;
+      } else {
+        const firstT = dated[0].fechaDate.getTime();
+        const lastT  = dated[dated.length - 1].fechaDate.getTime();
+        const range  = Math.max(1, lastT - firstT);
+        const pct    = t => (range === 0 ? 50 : ((t - firstT) / range) * 100);
+
+        const rowsTl = dated.map(it => {
+          const p = pct(it.fechaDate.getTime());
+          return `
+            <div class="pr-tl-id" style="--row-color:${it.color}">${escapeHtml(shortId(it.id))}</div>
+            <div class="pr-tl-bar-wrap">
+              <div class="pr-tl-dot" style="--row-color:${it.color}; left:${p.toFixed(2)}%"></div>
+            </div>
+            <div class="pr-tl-date">${escapeHtml(it.fechaStr)}</div>
+          `;
+        }).join('');
+
+        const startLabel = `${fmt2(dated[0].fechaDate.getDate())}/${fmt2(dated[0].fechaDate.getMonth()+1)}/${dated[0].fechaDate.getFullYear()}`;
+        const endLabel   = `${fmt2(dated[dated.length-1].fechaDate.getDate())}/${fmt2(dated[dated.length-1].fechaDate.getMonth()+1)}/${dated[dated.length-1].fechaDate.getFullYear()}`;
+
+        timelineHtml = `
+          <div class="pr-tl">
+            ${rowsTl}
+            <div class="pr-tl-scale"><span>${startLabel}</span><span>${endLabel}</span></div>
+          </div>
+        `;
+      }
+
+      printReport.innerHTML = `
+        <div class="pr-header">
+          <div class="pr-eyebrow">Reporte · En proceso</div>
+          <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
+          <div class="pr-sub">${escapeHtml(sub)}</div>
+          <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
+        </div>
+
+        <div class="pr-section">
+          <div class="pr-section-title">Licitaciones</div>
+          ${tableHtml}
+        </div>
+
+        <div class="pr-section">
+          <div class="pr-section-title">Línea del tiempo</div>
+          ${timelineHtml}
+        </div>
+
+        <div class="pr-footer">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
+      `;
+    }
+
+    function generateReport() {
+      if (!procState.items.length) {
+        showToast('No hay procesos para reportar');
+        return;
+      }
+      buildPrintReport();
+      document.body.classList.add('is-printing');
+      // Doble rAF: asegura que el navegador aplique los estilos de @media print antes del diálogo
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        window.print();
+      }));
+    }
+
+    // Limpieza cuando termina (o se cancela) el diálogo de impresión
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('is-printing');
+    });
+
+    if (reportBtn) reportBtn.addEventListener('click', generateReport);
   </script>
+
+  <!-- Contenedor exclusivo del reporte PDF (solo visible al imprimir) -->
+  <div id="print-report" aria-hidden="true"></div>
 
 </body>
 </html>
