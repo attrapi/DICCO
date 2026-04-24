@@ -1042,6 +1042,21 @@
     }
     .cal-day-id.more::before { display: none; }
 
+    /* Agrupa chip + lista por licitación; es el elemento clicable que lleva
+       a la línea del tiempo de ese contrato. */
+    .cal-day-entry {
+      --id-color: #fb923c;
+      display: block;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 1px 2px 2px;
+      transition: background .14s;
+    }
+    .cal-day-entry + .cal-day-entry { margin-top: 3px; }
+    .cal-day-entry:hover {
+      background: color-mix(in srgb, var(--id-color) 12%, transparent);
+    }
+
     /* Lista abajo de cada licitación: objeto resumido, estatus, y cualquier
        otro campo que se agregue en el futuro. */
     .cal-day-id-items {
@@ -2915,6 +2930,21 @@
       setTimeout(() => pulse(card, 'pulse-card'), 320);
     }
 
+    // Al hacer click desde el calendario: lleva al óvalo "Fallo" en la línea
+    // del tiempo (scroll horizontal al mes y palpitación sostenida).
+    function focusTimelineFor(idx) {
+      const node   = mxTimeline.querySelector(`.timeline-node[data-idx="${idx}"]`);
+      const nodeId = node ? node.querySelector('.timeline-node-id') : null;
+      const scrollArea = mxTimeline.querySelector('.timeline-scroll');
+      if (node && scrollArea) {
+        const nodeLeft = parseFloat(node.style.left) || 0;
+        const desired = Math.max(0, nodeLeft - scrollArea.clientWidth / 2);
+        scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
+      }
+      smoothScrollTo(mxTimeline.closest('.msection') || mxTimeline, 'center');
+      setTimeout(() => pulse(nodeId, 'pulse-tl-hold', 3000), 320);
+    }
+
     // Aplica el estado oculto/visible a puntos, nodos, barras de proyección
     // y filas de la leyenda
     function applyFilterVisibility() {
@@ -3097,31 +3127,47 @@
           const visible = idxs.slice(0, 3);
           visible.forEach(i => {
             const it = procState.items[i];
-            const row = document.createElement('div');
-            row.className = 'cal-day-id';
-            row.style.setProperty('--id-color', it.color);
-            row.title = it.id;
+            // Cada licitación del día es un "entry" propio (chip + lista),
+            // con su click dedicado que manda al óvalo Fallo de esa misma
+            // licitación en la línea del tiempo.
+            const entry = document.createElement('div');
+            entry.className = 'cal-day-entry';
+            entry.dataset.idx = i;
+            entry.style.setProperty('--id-color', it.color);
+            entry.title = it.id;
+
+            const chip = document.createElement('div');
+            chip.className = 'cal-day-id';
             const txt = document.createElement('span');
             txt.className = 'cal-day-id-text';
             txt.textContent = shortId(it.id);
-            row.appendChild(txt);
-            ids.appendChild(row);
+            chip.appendChild(txt);
+            entry.appendChild(chip);
 
             // Lista abajo de la licitación: resumen del objeto y estatus.
             // Diseñada para ir creciendo (se agregarán más ítems en el futuro).
             const details = document.createElement('ul');
             details.className = 'cal-day-id-items';
-            details.style.setProperty('--id-color', it.color);
             const lines = [
               `<li><span class="cal-day-id-lbl">Objeto</span><span class="cal-day-id-val">${summarizeTitle(it.title)}</span></li>`
             ];
             if (it.fechaStr) {
-              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">Fallo — ${it.fechaStr}</span></li>`);
+              // La fecha de Fallo sola — el día del calendario ya es el Fallo.
+              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">${it.fechaStr}</span></li>`);
             } else if (it.estatusStr) {
               lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">${it.estatusStr}</span></li>`);
             }
             details.innerHTML = lines.join('');
-            ids.appendChild(details);
+            entry.appendChild(details);
+
+            entry.addEventListener('mouseenter', () => setActive(i));
+            entry.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setActive(i);
+              focusTimelineFor(i);
+            });
+
+            ids.appendChild(entry);
           });
           if (idxs.length > 3) {
             const more = document.createElement('div');
@@ -3132,9 +3178,11 @@
           cell.appendChild(ids);
 
           cell.addEventListener('mouseenter', () => setActive(idxs[0]));
+          // Click fuera de cualquier entry (ej. en el número del día) cae al
+          // primero del día, también dirigido a la línea del tiempo.
           cell.addEventListener('click', () => {
             setActive(idxs[0]);
-            focusCard(idxs[0]);
+            focusTimelineFor(idxs[0]);
           });
         } else if (isToday) {
           const pill = document.createElement('span');
