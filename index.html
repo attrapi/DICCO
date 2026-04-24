@@ -1020,13 +1020,49 @@
       padding: 4px 6px;
       border-radius: 6px;
       border: 1px solid transparent;
-      transition: background .14s, border-color .14s;
+      transition: background .14s, border-color .14s, opacity .14s;
     }
     .timeline-legend-item:hover,
     .timeline-legend-item.is-active {
       background: rgba(255,255,255,.06);
       border-color: color-mix(in srgb, var(--id-color) 40%, transparent);
     }
+    .timeline-legend-item.is-filtered-off { opacity: .38; }
+    .timeline-legend-item.is-filtered-off:hover { opacity: .55; }
+
+    /* Checkbox a la izquierda del color — filtra el timeline */
+    .timeline-legend-check {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1.5px solid rgba(255,255,255,.45);
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: background .14s, border-color .14s;
+    }
+    .timeline-legend-check::after {
+      content: '';
+      width: 3px;
+      height: 6px;
+      border: solid #1a0610;
+      border-width: 0 2px 2px 0;
+      transform: translate(0, -1px) rotate(45deg);
+      opacity: 0;
+      transition: opacity .14s;
+    }
+    .timeline-legend-check.is-checked {
+      background: var(--id-color);
+      border-color: var(--id-color);
+    }
+    .timeline-legend-check.is-checked::after { opacity: 1; }
+    .timeline-legend-check:hover { border-color: rgba(255,255,255,.75); }
+
     .timeline-legend-dot {
       width: 10px;
       height: 10px;
@@ -1226,6 +1262,10 @@
       font-size: 11px;
       padding: 18px 0;
     }
+
+    /* Filtro: oculta puntos/nodos cuyo checkbox está desmarcado */
+    .timeline-point.is-hidden,
+    .timeline-node.is-hidden { display: none !important; }
 
     /* ── Botón "Reporte" dentro del modal ── */
     .modal-report-btn {
@@ -2499,7 +2539,7 @@
     const calPrev    = document.getElementById('cal-prev');
     const calNext    = document.getElementById('cal-next');
 
-    let procState = { items: [], calYear: 0, calMonth: 0, active: null };
+    let procState = { items: [], calYear: 0, calMonth: 0, active: null, hiddenIdxs: new Set() };
 
     // Parsea "DD/MM/YYYY HH:MM" → Date (hora local)
     function parseFallo(str) {
@@ -2623,6 +2663,38 @@
       const card = mxList.querySelector(`.proc-card[data-idx="${idx}"]`);
       smoothScrollTo(card || mxList.closest('.msection'), 'center');
       setTimeout(() => pulse(card, 'pulse-card'), 320);
+    }
+
+    // Aplica el estado oculto/visible a puntos, nodos y filas de la leyenda
+    function applyFilterVisibility() {
+      mxTimeline.querySelectorAll('.timeline-point[data-idx]').forEach(el => {
+        el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
+      });
+      mxTimeline.querySelectorAll('.timeline-node[data-idx]').forEach(el => {
+        el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
+      });
+      mxTimeline.querySelectorAll('.timeline-legend-item[data-idx]').forEach(row => {
+        const idx = +row.dataset.idx;
+        const isHidden = procState.hiddenIdxs.has(idx);
+        row.classList.toggle('is-filtered-off', isHidden);
+        const chk = row.querySelector('.timeline-legend-check');
+        if (chk) {
+          chk.classList.toggle('is-checked', !isHidden);
+          chk.setAttribute('aria-pressed', String(!isHidden));
+        }
+      });
+    }
+
+    function toggleFilter(idx) {
+      if (procState.hiddenIdxs.has(idx)) procState.hiddenIdxs.delete(idx);
+      else procState.hiddenIdxs.add(idx);
+      // Si el activo se acaba de ocultar, quita el estado activo
+      if (procState.active === idx && procState.hiddenIdxs.has(idx)) {
+        procState.active = null;
+        mxList.querySelectorAll('.proc-card.is-active').forEach(el => el.classList.remove('is-active'));
+        mxCalendar.querySelectorAll('.cal-day.is-active').forEach(el => el.classList.remove('is-active'));
+      }
+      applyFilterVisibility();
     }
 
     function setActive(idx) {
@@ -2823,14 +2895,30 @@
         row.dataset.idx = item.idx;
         row.style.setProperty('--id-color', item.color);
         row.title = item.id;
+        const checked = !procState.hiddenIdxs.has(item.idx);
         row.innerHTML = `
+          <button type="button"
+                  class="timeline-legend-check ${checked ? 'is-checked' : ''}"
+                  aria-label="Mostrar en línea del tiempo"
+                  aria-pressed="${checked}"></button>
           <span class="timeline-legend-dot"></span>
           <span class="timeline-legend-id">${shortId(item.id)}</span>
         `;
-        row.addEventListener('mouseenter', () => setActive(item.idx));
-        row.addEventListener('click', () => {
+        if (!checked) row.classList.add('is-filtered-off');
+
+        // Checkbox: toggle del filtro (no dispara focus)
+        row.querySelector('.timeline-legend-check').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFilter(item.idx);
+        });
+
+        row.addEventListener('mouseenter', () => {
+          if (!procState.hiddenIdxs.has(item.idx)) setActive(item.idx);
+        });
+        row.addEventListener('click', (e) => {
+          // El click del checkbox ya hizo stopPropagation — aquí solo enfoque.
+          if (procState.hiddenIdxs.has(item.idx)) return;
           setActive(item.idx);
-          // No mover el scroll vertical: solo enfocar el punto dentro del timeline
           const pt = mxTimeline.querySelector(`.timeline-point[data-idx="${item.idx}"]`);
           const scrollArea = mxTimeline.querySelector('.timeline-scroll');
           if (pt && scrollArea) {
@@ -2838,7 +2926,6 @@
             const desired = Math.max(0, ptLeft - scrollArea.clientWidth / 2);
             scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
           }
-          // Palpita 3 segundos (3 iteraciones de 1s)
           pulse(pt, 'pulse-tl-hold', 3000);
         });
         legendList.appendChild(row);
@@ -2904,9 +2991,10 @@
         // Dejamos un margen interno del 8% dentro del mes para que el punto no pegue al separador
         const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
         const pos = i % 2 === 0 ? 'above' : 'below';
+        const hidden = procState.hiddenIdxs.has(item.idx);
 
         const point = document.createElement('div');
-        point.className = 'timeline-point';
+        point.className = 'timeline-point' + (hidden ? ' is-hidden' : '');
         point.dataset.idx = item.idx;
         point.style.left = leftPx + 'px';
         point.style.setProperty('--pt-color', item.color);
@@ -2926,13 +3014,14 @@
 
         const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
         const node = document.createElement('div');
-        node.className = `timeline-node ${pos}`;
+        node.className = `timeline-node ${pos}` + (hidden ? ' is-hidden' : '');
+        node.dataset.idx = item.idx;
         node.style.left = leftPx + 'px';
         node.style.setProperty('--id-color', item.color);
         node.innerHTML = `
           <div class="timeline-stem"></div>
           <div class="timeline-bubble">
-            <div class="timeline-node-id" title="${item.id}">${shortId(item.id)}</div>
+            <div class="timeline-node-id" title="${item.id}">Fallo</div>
             <div class="timeline-node-date">${dateStr}</div>
           </div>
         `;
@@ -2990,6 +3079,7 @@
 
       procState.items = items;
       procState.active = null;
+      procState.hiddenIdxs = new Set(); // arranca con todos los filtros activos
 
       // Mes inicial: el de la licitación más próxima (futura), o la primera registrada
       const now = Date.now();
