@@ -681,14 +681,18 @@
     .modal-list .proc-card {
       cursor: pointer;
       --card-color: #fb923c;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: 22px;
+      row-gap: 12px;
       align-items: center;
-      gap: 22px;
       transition: background .16s, border-color .16s, transform .16s, box-shadow .16s;
     }
-    .modal-list .proc-card-main { flex: 1; min-width: 0; }
+    .modal-list .proc-card-main { grid-row: 1; grid-column: 1; min-width: 0; }
     .modal-list .proc-card-status {
-      flex-shrink: 0;
+      grid-row: 1;
+      grid-column: 2;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -696,6 +700,73 @@
       padding-left: 22px;
       border-left: 1px solid rgba(255,255,255,.14);
       min-width: 160px;
+    }
+
+    /* Tira horizontal con las 6 etapas de la licitación */
+    .modal-list .proc-card-stages {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255,255,255,.11);
+    }
+    .stage-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 7px 5px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      text-align: center;
+      min-width: 0;
+    }
+    .stage-item.is-fallo {
+      background: color-mix(in srgb, var(--card-color) 14%, rgba(255,255,255,.03));
+      border-color: color-mix(in srgb, var(--card-color) 48%, transparent);
+    }
+    .stage-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px; height: 17px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 9px;
+      font-weight: 800;
+      color: rgba(255,255,255,.7);
+    }
+    .stage-item.is-fallo .stage-num {
+      background: var(--card-color);
+      border-color: var(--card-color);
+      color: #2a0a12;
+    }
+    .stage-label {
+      font-size: 8.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.62);
+      letter-spacing: .35px;
+      line-height: 1.2;
+      max-width: 100%;
+    }
+    .stage-value {
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255,255,255,.40);
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .stage-item.is-fallo .stage-value {
+      color: var(--card-color);
     }
     .modal-list .proc-card-status-label {
       font-size: 9px;
@@ -725,16 +796,23 @@
     }
     @media (max-width: 760px) {
       .modal-list .proc-card {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        grid-template-columns: 1fr;
+        row-gap: 12px;
       }
+      .modal-list .proc-card-main,
+      .modal-list .proc-card-status { grid-column: 1; }
+      .modal-list .proc-card-main { grid-row: 1; }
       .modal-list .proc-card-status {
+        grid-row: 2;
         border-left: none;
         border-top: 1px solid rgba(255,255,255,.14);
         padding-left: 0;
         padding-top: 10px;
         min-width: 0;
+      }
+      .modal-list .proc-card-stages {
+        grid-row: 3;
+        grid-template-columns: repeat(3, 1fr);
       }
     }
     /* Reemplaza el dorado del ::before con el color de identidad de la licitación */
@@ -782,6 +860,43 @@
     }
 
     /* ── Calendario ── */
+    .cal-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .cal-toggle-group {
+      display: inline-flex;
+      border-radius: 999px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 3px;
+    }
+    .cal-toggle-btn {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,.58);
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .cal-toggle-btn:hover { color: #fff; }
+    .cal-toggle-btn.is-active {
+      background: rgba(247,217,139,.22);
+      color: #f7d98b;
+      box-shadow: 0 1px 6px rgba(247,217,139,.18);
+    }
+    /* Calendario colapsado: oculta la rejilla y la navegación de mes */
+    #proc-calendar-section.cal-collapsed .calendar,
+    #proc-calendar-section.cal-collapsed .cal-nav { display: none !important; }
+
     .cal-nav {
       display: inline-flex;
       align-items: center;
@@ -2361,14 +2476,20 @@
         <section class="msection" id="proc-calendar-section">
           <div class="msection-head">
             <div class="msection-title">Calendario</div>
-            <div class="cal-nav">
-              <button type="button" id="cal-prev" aria-label="Mes anterior">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <span class="cal-nav-label" id="cal-label">—</span>
-              <button type="button" id="cal-next" aria-label="Mes siguiente">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
+            <div class="cal-actions">
+              <div class="cal-toggle-group" role="tablist" aria-label="Mostrar u ocultar calendario">
+                <button type="button" class="cal-toggle-btn is-active" id="cal-show-btn">Mostrar</button>
+                <button type="button" class="cal-toggle-btn" id="cal-hide-btn">Ocultar</button>
+              </div>
+              <div class="cal-nav">
+                <button type="button" id="cal-prev" aria-label="Mes anterior">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <span class="cal-nav-label" id="cal-label">—</span>
+                <button type="button" id="cal-next" aria-label="Mes siguiente">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
             </div>
           </div>
           <div class="calendar" id="mx-calendar"></div>
@@ -2572,6 +2693,16 @@
        ══════════════════════════════════════════════════════════ */
     const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+    // Etapas del proceso de licitación (solo Fallo tiene fecha por ahora)
+    const STAGES = [
+      'Preconvocatoria',
+      'Convocatoria',
+      'Visita al sitio',
+      'Junta de aclaraciones',
+      'Apertura de proposiciones',
+      'Fallo',
+    ];
     const DOW   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     // Paleta de identidad por licitación (ciclada por índice)
     const PALETTE = ['#fb923c','#7dd3fc','#6ee7b7','#f9a8d4','#c4b5fd','#fde047','#fca5a5','#f7d98b'];
@@ -2787,6 +2918,18 @@
         card.className = 'proc-card';
         card.dataset.idx = item.idx;
         card.style.setProperty('--card-color', item.color);
+        const stagesHtml = STAGES.map((name, si) => {
+          const isFallo = si === STAGES.length - 1;
+          const value = isFallo ? (item.fechaStr || '—') : '—';
+          return `
+            <div class="stage-item${isFallo ? ' is-fallo' : ''}">
+              <div class="stage-num">${si + 1}</div>
+              <div class="stage-label">${name}</div>
+              <div class="stage-value">${value}</div>
+            </div>
+          `;
+        }).join('');
+
         card.innerHTML = `
           <div class="proc-card-main">
             <div class="proc-title">${item.title}</div>
@@ -2802,6 +2945,7 @@
             ${item.fechaStr ? `<div class="proc-card-status-fallo">Fallo</div>` : ''}
             <div class="proc-card-status-value">${item.fechaStr || ''}</div>
           </div>
+          <div class="proc-card-stages">${stagesHtml}</div>
         `;
         card.addEventListener('mouseenter', () => setActive(item.idx));
         card.addEventListener('click', (e) => {
@@ -3209,6 +3353,18 @@
       if (procState.calMonth > 11) { procState.calMonth = 0; procState.calYear++; }
       renderCalendar();
     });
+
+    // ── Toggle Mostrar / Ocultar calendario ──
+    const calSection = document.getElementById('proc-calendar-section');
+    const calShowBtn = document.getElementById('cal-show-btn');
+    const calHideBtn = document.getElementById('cal-hide-btn');
+    function setCalVisible(visible) {
+      calSection.classList.toggle('cal-collapsed', !visible);
+      calShowBtn.classList.toggle('is-active', visible);
+      calHideBtn.classList.toggle('is-active', !visible);
+    }
+    calShowBtn.addEventListener('click', () => setCalVisible(true));
+    calHideBtn.addEventListener('click', () => setCalVisible(false));
 
     /* ══════════════════════════════════════════════════════════
        Reporte PDF — licitaciones + línea del tiempo (sin calendario)
