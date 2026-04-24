@@ -3852,6 +3852,198 @@
     });
 
     if (reportBtn) reportBtn.addEventListener('click', generateReport);
+
+    /* ══════════════════════════════════════════════════════════
+       Sync en tiempo real desde la matriz publicada (Google Sheets)
+       ──────────────────────────────────────────────────────────
+       • Modo MERGE: el HTML trae la estructura de acordeones + tarjetas
+         con sus hitos conocidos hardcoded. El CSV solo aporta los hitos
+         PENDIENTES (columna "Estatus Actual") y se inyectan/actualizan.
+       • PROY. SN → Subdirector A (José Roberto García)
+         PROY. QI → Subdirector B (Ernesto A. Hernández Hernández)
+         PROY. DCC → pendiente (no se mapea aún)
+       • Auto-refresh cada 5 min para reflejar ediciones de la hoja
+         sin que el usuario tenga que recargar.
+       ══════════════════════════════════════════════════════════ */
+    const LIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRSJwRjo0crHGxppFRDXPsmcT-N5CcJIUG5jTo2DRoUGxSgIaY0hxeGXfIWZj74Ug/pub?gid=1715498132&single=true&output=csv';
+    const LIVE_REFRESH_MS = 5 * 60 * 1000;
+
+    // Índices fijos por POSICIÓN (la hoja trae 2 filas de encabezados con
+    // celdas combinadas; por nombre no es confiable, por índice sí).
+    const CSV_COL_PROY    = 1;   // SN / QI / DCC
+    const CSV_COL_PROC_ID = 4;   // NO. DE PROCEDIMIENTO
+    const CSV_COL_ESTATUS = 5;   // ESTATUS ACTUAL
+
+    // Parser CSV mínimo que respeta comillas y saltos de línea dentro de
+    // celdas (como la de N-32-2026 que trae el ID partido en dos líneas
+    // y el Estatus Actual con dos hitos).
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let field = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+          if (c === '"') {
+            if (text[i + 1] === '"') { field += '"'; i++; }
+            else inQuotes = false;
+          } else field += c;
+        } else {
+          if (c === '"') inQuotes = true;
+          else if (c === ',') { row.push(field); field = ''; }
+          else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+          else if (c === '\r') { /* skip */ }
+          else field += c;
+        }
+      }
+      if (field.length || row.length) { row.push(field); rows.push(row); }
+      return rows;
+    }
+
+    // Limpia un ID de procedimiento que venga del CSV (puede traer
+    // saltos de línea y comas de la forma como lo capturaron en la hoja).
+    function normalizeProcId(s) {
+      return String(s || '').replace(/\s+/g, '').replace(/,+/g, '').trim();
+    }
+
+    // Parsea el contenido de la celda "Estatus Actual":
+    //   "APERTURA 09/04/2026
+    //    FALLO 27/04/2026"
+    // → [{stage:'Apertura de proposiciones', rawValue:'09/04/2026'}, …]
+    // Líneas que no hacen match con un hito conocido se guardan como
+    // texto de estatus.
+    function parseEstatusActual(cell) {
+      const out = { hitos: [], statusLines: [] };
+      if (!cell) return out;
+      const lines = cell.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        // "ETAPA DD/MM/YYYY [HH:MM]"  (acepta también "DD\MM\YYYY")
+        const m = line.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ][A-Za-zÁÉÍÓÚÑáéíóúñ\s]+?)\s+(\d{1,2}[\/\\]\d{1,2}[\/\\]\d{4}(?:\s+\d{1,2}:\d{2})?)\s*$/);
+        if (m) {
+          const stage = resolveStage(m[1]);
+          if (stage) {
+            const date = m[2].replace(/\\/g, '/');
+            out.hitos.push({ stage, rawValue: date });
+            continue;
+          }
+        }
+        out.statusLines.push(line);
+      }
+      return out;
+    }
+
+    // Busca la .proc-card por el texto visible de su .proc-id
+    function findCardByProcId(rawId) {
+      const target = normalizeProcId(rawId);
+      if (!target) return null;
+      const cards = document.querySelectorAll('.proc-card');
+      for (const c of cards) {
+        const idText = c.querySelector('.proc-id')?.textContent.trim() || '';
+        if (normalizeProcId(idText) === target) return c;
+      }
+      return null;
+    }
+
+    // Icono calendario (lo usamos para meta-rows inyectados con fecha)
+    const META_ICON_CAL = `<svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+    const META_ICON_INFO = `<svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v6M12 16v.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+
+    function findMetaRowByStage(card, stage) {
+      const rows = card.querySelectorAll('.proc-meta-row');
+      for (const r of rows) {
+        const txt = r.querySelector('.proc-meta')?.textContent.trim() || '';
+        const m = txt.match(/^(.+?):/);
+        if (!m) continue;
+        if (resolveStage(m[1].trim()) === stage) return r;
+      }
+      return null;
+    }
+
+    function findEstatusMetaRow(card) {
+      const rows = card.querySelectorAll('.proc-meta-row');
+      for (const r of rows) {
+        const txt = r.querySelector('.proc-meta')?.textContent.trim() || '';
+        if (/^estatus\s*:/i.test(txt)) return r;
+      }
+      return null;
+    }
+
+    function updateMetaRowContent(row, label, value, icon) {
+      const metaSpan = row.querySelector('.proc-meta');
+      if (!metaSpan) return;
+      metaSpan.innerHTML = `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}`;
+      if (icon) {
+        const existingIcon = row.querySelector('.proc-meta-icon');
+        if (existingIcon) existingIcon.outerHTML = icon;
+      }
+      row.dataset.liveSynced = '1';
+    }
+
+    function appendMetaRow(card, label, value, icon) {
+      const row = document.createElement('div');
+      row.className = 'proc-meta-row';
+      row.dataset.liveSynced = '1';
+      row.innerHTML = `${icon}<span class="proc-meta"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</span>`;
+      card.appendChild(row);
+    }
+
+    // Etiqueta de fila para cada etapa (igual que la usamos en el HTML)
+    const STAGE_META_LABEL = {
+      'Preconvocatoria': 'Preconvocatoria',
+      'Convocatoria': 'Convocatoria',
+      'Visita al sitio': 'Visita al sitio',
+      'Junta de aclaraciones': 'Junta de aclaraciones',
+      'Apertura de proposiciones': 'Apertura de proposiciones',
+      'Fallo': 'Fecha y hora del acto del Fallo',
+    };
+
+    function mergeCsvRowIntoCard(card, parsed) {
+      for (const h of parsed.hitos) {
+        const label = STAGE_META_LABEL[h.stage] || h.stage;
+        const existing = findMetaRowByStage(card, h.stage);
+        if (existing) updateMetaRowContent(existing, label, h.rawValue, META_ICON_CAL);
+        else appendMetaRow(card, label, h.rawValue, META_ICON_CAL);
+      }
+      if (parsed.statusLines.length) {
+        const joined = parsed.statusLines.join(' / ');
+        const existing = findEstatusMetaRow(card);
+        if (existing) updateMetaRowContent(existing, 'Estatus', joined, META_ICON_INFO);
+        else appendMetaRow(card, 'Estatus', joined, META_ICON_INFO);
+      }
+    }
+
+    async function syncFromMatrix() {
+      try {
+        const res = await fetch(LIVE_CSV_URL, { cache: 'no-cache' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const rows = parseCsv(text);
+        let synced = 0;
+        // Filas 0 y 1 son encabezados; datos desde la fila 2
+        for (let i = 2; i < rows.length; i++) {
+          const row = rows[i];
+          const proy  = (row[CSV_COL_PROY] || '').trim().toUpperCase();
+          // Solo nos interesan los proyectos mapeados (SN y QI)
+          if (proy !== 'SN' && proy !== 'QI') continue;
+          const rawId = row[CSV_COL_PROC_ID] || '';
+          if (!rawId.trim()) continue;
+          const card = findCardByProcId(rawId);
+          if (!card) continue;
+          const parsed = parseEstatusActual(row[CSV_COL_ESTATUS] || '');
+          if (!parsed.hitos.length && !parsed.statusLines.length) continue;
+          mergeCsvRowIntoCard(card, parsed);
+          synced++;
+        }
+        console.info(`[matriz] sync OK: ${synced} licitaciones actualizadas`);
+      } catch (err) {
+        console.warn('[matriz] sync falló — la UI conserva los datos hardcoded:', err);
+      }
+    }
+
+    // Primer fetch al cargar la página, luego refresh periódico
+    syncFromMatrix();
+    setInterval(syncFromMatrix, LIVE_REFRESH_MS);
   </script>
 
 </body>
