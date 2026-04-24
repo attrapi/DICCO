@@ -1259,7 +1259,7 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      @page { size: A4; margin: 12mm; }
+      @page { size: A4; margin: 8mm 10mm; }
 
       html, body {
         background: #fff !important;
@@ -1275,141 +1275,174 @@
       #print-report {
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
         color: #1a1a1a;
-        font-size: 10.5pt;
-        line-height: 1.4;
+        font-size: 9.5pt;
+        line-height: 1.3;
       }
       #print-report .pr-header {
-        border-bottom: 2px solid #691c32;
-        padding-bottom: 10px;
-        margin-bottom: 16px;
+        border-bottom: 1.5px solid #691c32;
+        padding-bottom: 5px;
+        margin-bottom: 8px;
       }
       #print-report .pr-eyebrow {
-        font-size: 8pt;
+        font-size: 7pt;
         font-weight: 800;
-        letter-spacing: 2px;
+        letter-spacing: 1.8px;
         text-transform: uppercase;
         color: #c9922a;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
       #print-report .pr-title {
-        font-size: 16pt;
+        font-size: 13pt;
         font-weight: 900;
         text-transform: uppercase;
         color: #691c32;
         letter-spacing: .3px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
       #print-report .pr-sub {
-        font-size: 10pt;
+        font-size: 8.5pt;
         color: #555;
       }
       #print-report .pr-meta {
-        font-size: 9pt;
-        color: #666;
-        margin-top: 6px;
+        font-size: 7.5pt;
+        color: #888;
+        margin-top: 2px;
       }
 
       #print-report .pr-section {
-        margin-top: 18px;
-        page-break-inside: avoid;
+        margin-top: 8px;
       }
       #print-report .pr-section-title {
-        font-size: 10pt;
+        font-size: 8.5pt;
         font-weight: 800;
-        letter-spacing: 1.6px;
+        letter-spacing: 1.4px;
         text-transform: uppercase;
         color: #c9922a;
-        margin-bottom: 10px;
+        margin-bottom: 4px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 7px;
       }
       #print-report .pr-section-title::before {
         content: '';
         display: inline-block;
-        width: 18px; height: 2px;
+        width: 14px; height: 2px;
         background: #c9922a;
         border-radius: 2px;
       }
 
-      /* Tabla de licitaciones */
-      #print-report table.pr-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9.5pt;
+      /* Lista de licitaciones apiladas (estilo tarjeta compacta) */
+      #print-report .pr-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
-      #print-report table.pr-table th,
-      #print-report table.pr-table td {
+      #print-report .pr-item {
+        display: grid;
+        grid-template-columns: 3px 1fr 165px;
+        gap: 0;
         border: 1px solid #d8d8d8;
-        padding: 7px 9px;
-        text-align: left;
-        vertical-align: top;
+        border-radius: 4px;
+        overflow: hidden;
+        page-break-inside: avoid;
+        background: #fafafa;
       }
-      #print-report table.pr-table thead th {
-        background: #f4e9da;
-        color: #691c32;
-        font-size: 8.5pt;
-        font-weight: 800;
-        letter-spacing: .8px;
-        text-transform: uppercase;
-      }
-      #print-report table.pr-table tbody tr { page-break-inside: avoid; }
-      #print-report table.pr-table .pr-color-cell {
-        width: 12px;
-        padding: 0;
+      #print-report .pr-item-color {
         background: var(--row-color, #c9922a);
       }
-      #print-report table.pr-table .pr-id {
-        font-family: ui-monospace, Menlo, Consolas, monospace;
+      #print-report .pr-item-main {
+        padding: 5px 9px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      #print-report .pr-item-title {
         font-size: 9pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #222;
+        line-height: 1.25;
+        letter-spacing: .15px;
+      }
+      #print-report .pr-item-id {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 8pt;
+        font-weight: 700;
         color: #8a6716;
-        white-space: nowrap;
+        letter-spacing: .3px;
       }
-      #print-report table.pr-table .pr-fallo {
+      #print-report .pr-item-status {
+        padding: 5px 10px;
+        border-left: 1px solid #e5e5e5;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        text-align: right;
+      }
+      #print-report .pr-item-fallo-label {
+        font-size: 6.5pt;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #c9922a;
+      }
+      #print-report .pr-item-fallo-value {
         font-family: ui-monospace, Menlo, Consolas, monospace;
-        font-size: 9pt;
+        font-size: 8.5pt;
+        font-weight: 700;
+        color: #222;
         white-space: nowrap;
+        margin-top: 1px;
       }
-      #print-report table.pr-table .pr-fallo-empty {
-        color: #888;
+      #print-report .pr-item-status-empty {
+        font-size: 7.5pt;
+        color: #999;
         font-style: italic;
       }
+      #print-report .pr-empty-row {
+        text-align: center;
+        color: #888;
+        font-style: italic;
+        padding: 8px;
+        font-size: 8.5pt;
+      }
 
-      /* Línea del tiempo (versión imprimible, tipo Gantt vertical) */
+      /* Línea del tiempo (versión imprimible, tipo Gantt horizontal compacto) */
       #print-report .pr-tl-empty {
         text-align: center;
         color: #888;
         font-style: italic;
-        padding: 10px;
+        padding: 6px;
+        font-size: 8.5pt;
       }
       #print-report .pr-tl {
         display: grid;
         grid-template-columns: auto 1fr auto;
-        gap: 6px 14px;
+        gap: 3px 10px;
         align-items: center;
-        font-size: 9.5pt;
-      }
-      #print-report .pr-tl-row {
-        display: contents;
+        font-size: 8.5pt;
       }
       #print-report .pr-tl-id {
         font-family: ui-monospace, Menlo, Consolas, monospace;
         font-weight: 700;
+        font-size: 8pt;
         color: #1a1a1a;
         white-space: nowrap;
         display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: 6px;
       }
       #print-report .pr-tl-id::before {
         content: '';
-        width: 9px; height: 9px; border-radius: 2px;
+        width: 8px; height: 8px; border-radius: 2px;
         background: var(--row-color, #c9922a);
         border: 1px solid rgba(0,0,0,.3);
       }
       #print-report .pr-tl-bar-wrap {
         position: relative;
-        height: 10px;
+        height: 8px;
         background: #f0e5cf;
         border-radius: 3px;
         overflow: hidden;
@@ -1417,22 +1450,22 @@
       #print-report .pr-tl-bar-wrap::before {
         content: '';
         position: absolute;
-        inset: 4px 0;
+        inset: 3px 0;
         background: repeating-linear-gradient(90deg, #ddd 0 1px, transparent 1px 40px);
       }
       #print-report .pr-tl-dot {
         position: absolute;
         top: 50%;
-        width: 12px; height: 12px;
+        width: 10px; height: 10px;
         border-radius: 50%;
         background: var(--row-color, #c9922a);
-        border: 2px solid #fff;
+        border: 1.5px solid #fff;
         box-shadow: 0 0 0 1px rgba(0,0,0,.35);
         transform: translate(-50%, -50%);
       }
       #print-report .pr-tl-date {
         font-family: ui-monospace, Menlo, Consolas, monospace;
-        font-size: 9pt;
+        font-size: 8pt;
         color: #333;
         white-space: nowrap;
       }
@@ -1440,19 +1473,19 @@
         grid-column: 2 / 3;
         display: flex;
         justify-content: space-between;
-        font-size: 7.5pt;
-        color: #666;
+        font-size: 6.5pt;
+        color: #777;
         margin-top: 2px;
-        padding-top: 4px;
+        padding-top: 2px;
         border-top: 1px solid #d8d8d8;
       }
       #print-report .pr-footer {
-        margin-top: 20px;
-        font-size: 8pt;
-        color: #999;
+        margin-top: 10px;
+        font-size: 7pt;
+        color: #aaa;
         text-align: center;
-        border-top: 1px solid #ddd;
-        padding-top: 8px;
+        border-top: 1px solid #e5e5e5;
+        padding-top: 4px;
       }
 
       /* Forzar color-adjust para que los fondos/bordes tintados salgan impresos */
@@ -3015,33 +3048,26 @@
       const fmt2 = n => String(n).padStart(2,'0');
       const emisionStr = `${fmt2(today.getDate())}/${fmt2(today.getMonth()+1)}/${today.getFullYear()} ${fmt2(today.getHours())}:${fmt2(today.getMinutes())}`;
 
-      // ─── Tabla de licitaciones ───
-      const rowsHtml = items.length ? items.map((it, i) => `
-        <tr>
-          <td class="pr-color-cell" style="--row-color:${it.color}"></td>
-          <td>${i + 1}</td>
-          <td>${escapeHtml(it.title)}</td>
-          <td class="pr-id">${escapeHtml(it.id)}</td>
-          <td class="pr-fallo ${it.fechaStr ? '' : 'pr-fallo-empty'}">
-            ${it.fechaStr ? escapeHtml(it.fechaStr) : (escapeHtml(it.estatusStr) || 'Sin fecha')}
-          </td>
-        </tr>
-      `).join('') : `<tr><td colspan="5" style="text-align:center; color:#888; font-style:italic;">Sin procesos registrados</td></tr>`;
+      // ─── Lista de licitaciones apilada (una fila por licitación) ───
+      const itemsHtml = items.length ? items.map(it => {
+        const hasFallo = !!it.fechaStr;
+        const statusHtml = hasFallo
+          ? `<div class="pr-item-fallo-label">Fallo</div>
+             <div class="pr-item-fallo-value">${escapeHtml(it.fechaStr)}</div>`
+          : `<div class="pr-item-status-empty">${escapeHtml(it.estatusStr) || 'Sin fecha'}</div>`;
+        return `
+          <div class="pr-item">
+            <div class="pr-item-color" style="--row-color:${it.color}"></div>
+            <div class="pr-item-main">
+              <div class="pr-item-title">${escapeHtml(it.title)}</div>
+              <div class="pr-item-id">${escapeHtml(it.id)}</div>
+            </div>
+            <div class="pr-item-status">${statusHtml}</div>
+          </div>
+        `;
+      }).join('') : `<div class="pr-empty-row">Sin procesos registrados</div>`;
 
-      const tableHtml = `
-        <table class="pr-table">
-          <thead>
-            <tr>
-              <th class="pr-color-cell"></th>
-              <th style="width:28px;">#</th>
-              <th>Licitación</th>
-              <th>ID</th>
-              <th>Fallo / Estatus</th>
-            </tr>
-          </thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-      `;
+      const listHtml = `<div class="pr-list">${itemsHtml}</div>`;
 
       // ─── Línea del tiempo (horizontal, proporcional al rango real) ───
       let timelineHtml;
@@ -3085,7 +3111,7 @@
 
         <div class="pr-section">
           <div class="pr-section-title">Licitaciones</div>
-          ${tableHtml}
+          ${listHtml}
         </div>
 
         <div class="pr-section">
