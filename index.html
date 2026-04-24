@@ -4041,9 +4041,15 @@
       }
     }
 
-    // Primer fetch al cargar la página, luego refresh periódico
-    syncFromMatrix();
-    setInterval(syncFromMatrix, LIVE_REFRESH_MS);
+    // Primer fetch al cargar la página, luego refresh periódico.
+    // Para depurar, se puede abrir la página con ?nosync en la URL y así
+    // la app se queda con los datos hardcoded (sin llamar a Google Sheets).
+    if (!/[?&]nosync\b/.test(location.search)) {
+      syncFromMatrix();
+      setInterval(syncFromMatrix, LIVE_REFRESH_MS);
+    } else {
+      console.info('[matriz] sync deshabilitado por ?nosync');
+    }
   </script>
 
 </body>
