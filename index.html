@@ -1123,8 +1123,6 @@
       display: flex;
       flex-direction: column;
       gap: 5px;
-      overflow-y: auto;
-      max-height: 180px;
     }
     .timeline-legend-item {
       --id-color: #fb923c;
@@ -1135,6 +1133,8 @@
       padding: 4px 6px;
       border-radius: 6px;
       border: 1px solid transparent;
+      height: 26px;
+      box-sizing: border-box;
       transition: background .14s, border-color .14s, opacity .14s;
     }
     .timeline-legend-item:hover,
@@ -1266,27 +1266,24 @@
     }
 
     /* Barra de proyección — un "camino" de poca opacidad que va desde el
-       inicio del track hasta el punto de fallo de cada licitación. Se
-       apila arriba o abajo del eje central alternando. */
+       inicio del track hasta el punto de fallo, en el mismo carril (Y)
+       que la fila de la licitación en la columna "Contrato". */
     .timeline-projection {
       --proj-color: #fb923c;
-      --proj-off: 36px;
       position: absolute;
       left: 0;
-      height: 5px;
+      height: 6px;
       background: var(--proj-color);
-      opacity: .20;
+      opacity: .22;
       border-radius: 0 3px 3px 0;
       transform: translateY(-50%);
       pointer-events: none;
       z-index: 1;
       transition: opacity .15s, height .15s;
     }
-    .timeline-projection.above { top: calc(50% - var(--proj-off)); }
-    .timeline-projection.below { top: calc(50% + var(--proj-off)); }
     .timeline-projection.is-active {
-      opacity: .55;
-      height: 6px;
+      opacity: .6;
+      height: 8px;
     }
     .timeline-projection.is-hidden { display: none !important; }
 
@@ -1325,9 +1322,9 @@
     .timeline-point {
       --pt-color: #fb923c;
       position: absolute;
-      top: 50%;
+      /* top se asigna inline según el carril de la licitación */
       transform: translate(-50%, -50%);
-      width: 14px; height: 14px;
+      width: 13px; height: 13px;
       border-radius: 50%;
       background: var(--pt-color);
       border: 2px solid #2a0a12;
@@ -1362,60 +1359,40 @@
     /* Palpitación sostenida (3s) — se aplica al click del ID en la leyenda */
     .timeline-point.pulse-tl-hold { animation: tl-flash 1s ease-out 3; }
     /* Nodo: callout con tallo + pastilla (ID) + fecha, alternando arriba/abajo */
+    /* Etiqueta "Fallo + fecha" inline, a la derecha del punto, dentro
+       del mismo carril que la barra de proyección. */
     .timeline-node {
       --id-color: #fb923c;
-      --stem-h: 26px;
       position: absolute;
-      left: 0;
-      transform: translateX(-50%);
+      /* top se asigna inline; left es el x del punto; lo empujamos a la
+         derecha del punto mediante translate. */
+      transform: translate(10px, -50%);
       display: flex;
+      flex-direction: row;
       align-items: center;
+      gap: 8px;
       pointer-events: none;
       z-index: 4;
-    }
-    .timeline-node.above {
-      bottom: calc(50% + 8px);
-      flex-direction: column-reverse; /* bubble arriba, stem baja al punto */
-    }
-    .timeline-node.below {
-      top: calc(50% + 8px);
-      flex-direction: column;          /* stem sale del punto, bubble debajo */
-    }
-    .timeline-stem {
-      width: 2px;
-      height: var(--stem-h);
-      background: var(--id-color);
-      opacity: .65;
-      border-radius: 2px;
-    }
-    .timeline-bubble {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
+      white-space: nowrap;
     }
     .timeline-node-id {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 9px;
       font-weight: 800;
-      letter-spacing: .2px;
+      letter-spacing: .3px;
+      text-transform: uppercase;
       color: #2a0a12;
       background: var(--id-color);
       padding: 2px 8px;
       border-radius: 999px;
       border: 1.5px solid #1a0610;
-      white-space: nowrap;
-      max-width: 160px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-shadow: 0 2px 4px rgba(0,0,0,.35);
+      box-shadow: 0 1px 3px rgba(0,0,0,.35);
     }
     .timeline-node-date {
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: .4px;
-      color: rgba(255,255,255,.82);
-      white-space: nowrap;
+      letter-spacing: .35px;
+      color: rgba(255,255,255,.85);
     }
     .timeline-empty {
       text-align: center;
@@ -3161,30 +3138,21 @@
       scroll.appendChild(monthsRow);
 
       // Track contenedor — el eje amarillo es ::before, los puntos/nodos
-      // y las barras de proyección van adentro.
+      // y las barras de proyección van adentro. Cada licitación ocupa su
+      // propio carril horizontal, alineado con la fila correspondiente
+      // en la columna "Contrato" (mismo orden y alturas).
       const track = document.createElement('div');
       track.className = 'timeline-track';
       track.style.width = totalW + 'px';
 
-      // Parámetros de apilamiento vertical (niveles arriba/abajo del eje).
-      // Los primeros dos items (uno arriba, uno abajo) usan el offset más
-      // pequeño pero suficiente para que el texto no toque la línea central.
-      const BASE_STEM    = 26;  // altura del stem del primer nivel
-      const LEVEL_STEP   = 38;  // lo que crece el stem por cada nivel extra
-      const POINT_GAP    = 10;  // espacio libre entre eje y primer elemento
-      const BUBBLE_ROOM  = 46;  // espacio reservado para la burbuja (ID + fecha)
+      // Carriles: cada uno corresponde 1-a-1 con una fila de la leyenda.
+      const LANE_H     = 26;  // debe coincidir con la altura de .timeline-legend-item
+      const LANE_GAP   = 5;   // debe coincidir con el gap del .timeline-legend-list
+      const TRACK_VPAD = 2;   // leve margen superior/inferior dentro del track
 
-      // Niveles necesarios a cada lado (arriba, abajo)
-      const countAbove = Math.ceil(dated.length / 2);
-      const countBelow = Math.floor(dated.length / 2);
-      const maxLevelAbove = Math.max(0, countAbove - 1);
-      const maxLevelBelow = Math.max(0, countBelow - 1);
-      const maxStemAbove = BASE_STEM + maxLevelAbove * LEVEL_STEP;
-      const maxStemBelow = BASE_STEM + maxLevelBelow * LEVEL_STEP;
-
-      // Altura del track — lo suficiente para acomodar todas las burbujas a
-      // ambos lados del eje sin recortarlas.
-      const trackH = 2 * (POINT_GAP + Math.max(maxStemAbove, maxStemBelow) + BUBBLE_ROOM);
+      const trackH = TRACK_VPAD * 2
+                   + dated.length * LANE_H
+                   + Math.max(0, dated.length - 1) * LANE_GAP;
       track.style.height = trackH + 'px';
 
       // Separadores verticales entre meses (punteado a lo largo del track)
@@ -3196,40 +3164,39 @@
         track.appendChild(sep);
       });
 
-      // Posicionar cada punto: mes * ancho_mes + (día-1)/(días_mes-1) * ancho_mes
+      // Dibujar cada licitación en su carril
       dated.forEach((item, i) => {
         const d = item.fechaDate;
         const mi = months.findIndex(m => m.getMonth() === d.getMonth() && m.getFullYear() === d.getFullYear());
         const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
         const dayRatio = daysInMonth > 1 ? (d.getDate() - 1) / (daysInMonth - 1) : 0.5;
-        // Dejamos un margen interno del 8% dentro del mes para que el punto no pegue al separador
+        // Margen interno del 8% dentro del mes para que el punto no pegue al separador
         const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
-        const pos = i % 2 === 0 ? 'above' : 'below';
-        const level = Math.floor(i / 2);
-        const stemH = BASE_STEM + level * LEVEL_STEP;
-        const projOff = POINT_GAP + stemH;  // distancia del eje al centro de la barra
+        // Centro vertical del carril i (alineado con la fila i de la leyenda)
+        const laneCenter = TRACK_VPAD + i * (LANE_H + LANE_GAP) + LANE_H / 2;
         const hidden = procState.hiddenIdxs.has(item.idx);
 
-        // Barra de proyección (camino) desde el inicio del track hasta el punto
+        // Barra de proyección (camino de baja opacidad) desde x=0 al punto
         const proj = document.createElement('div');
-        proj.className = `timeline-projection ${pos}` + (hidden ? ' is-hidden' : '');
+        proj.className = 'timeline-projection' + (hidden ? ' is-hidden' : '');
         proj.dataset.idx = item.idx;
         proj.style.left = '0';
+        proj.style.top = laneCenter + 'px';
         proj.style.width = leftPx + 'px';
         proj.style.setProperty('--proj-color', item.color);
-        proj.style.setProperty('--proj-off', projOff + 'px');
         track.appendChild(proj);
 
+        // Punto al final de la barra
         const point = document.createElement('div');
         point.className = 'timeline-point' + (hidden ? ' is-hidden' : '');
         point.dataset.idx = item.idx;
         point.style.left = leftPx + 'px';
+        point.style.top = laneCenter + 'px';
         point.style.setProperty('--pt-color', item.color);
         point.title = `${item.id} — ${item.fechaStr}`;
         point.addEventListener('mouseenter', () => setActive(item.idx));
         point.addEventListener('click', () => {
           setActive(item.idx);
-          // Ir a la celda del calendario que le corresponde y palparla
           let firstCell = null;
           mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
             const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
@@ -3239,19 +3206,17 @@
           setTimeout(() => pulse(firstCell, 'pulse-cal'), 320);
         });
 
+        // Etiqueta "Fallo + fecha" inline a la derecha del punto
         const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
         const node = document.createElement('div');
-        node.className = `timeline-node ${pos}` + (hidden ? ' is-hidden' : '');
+        node.className = 'timeline-node' + (hidden ? ' is-hidden' : '');
         node.dataset.idx = item.idx;
         node.style.left = leftPx + 'px';
+        node.style.top = laneCenter + 'px';
         node.style.setProperty('--id-color', item.color);
-        node.style.setProperty('--stem-h', stemH + 'px');
         node.innerHTML = `
-          <div class="timeline-stem"></div>
-          <div class="timeline-bubble">
-            <div class="timeline-node-id" title="${item.id}">Fallo</div>
-            <div class="timeline-node-date">${dateStr}</div>
-          </div>
+          <div class="timeline-node-id" title="${item.id}">Fallo</div>
+          <div class="timeline-node-date">${dateStr}</div>
         `;
 
         track.appendChild(point);
