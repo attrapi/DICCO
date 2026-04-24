@@ -1303,58 +1303,18 @@
       cursor: not-allowed;
       pointer-events: none;
     }
-    .timeline-point {
-      --pt-color: #fb923c;
-      position: absolute;
-      /* top se asigna inline según el carril de la licitación */
-      transform: translate(-50%, -50%);
-      width: 13px; height: 13px;
-      border-radius: 50%;
-      background: var(--pt-color);
-      border: 2px solid #2a0a12;
-      box-shadow: 0 1px 3px rgba(0,0,0,.35);
-      cursor: pointer;
-      transition: transform .15s, border-color .15s;
-      z-index: 3;
-    }
-    .timeline-point:hover,
-    .timeline-point.is-active {
-      transform: translate(-50%, -50%) scale(1.25);
-      border-color: #fff;
-    }
-
-    /* Flash amarillo canario (suave) — 1s total */
-    @keyframes tl-flash {
-      0%   {
-        transform: translate(-50%, -50%) scale(1.55);
-        background: radial-gradient(circle at 35% 30%, #fff 0%, #fef08a 55%, #fde047 100%);
-        box-shadow:
-          0 0 0 5px rgba(254,240,138,.55),
-          0 0 14px #fef08a,
-          0 0 28px rgba(254,240,138,.75),
-          inset 0 0 5px #fff;
-        border-color: #fff;
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(1);
-      }
-    }
-    .timeline-point.pulse-tl { animation: tl-flash 1s ease-out 1; }
-    /* Palpitación sostenida (3s) — se aplica al click del ID en la leyenda */
-    .timeline-point.pulse-tl-hold { animation: tl-flash 1s ease-out 3; }
-    /* Nodo: callout con tallo + pastilla (ID) + fecha, alternando arriba/abajo */
-    /* Etiqueta "Fallo + fecha" inline, a la derecha del punto, dentro
-       del mismo carril que la barra de proyección. */
+    /* Ya no hay círculo: la barra de proyección y la línea punteada
+       llegan directamente al óvalo "Fallo". El óvalo es el elemento
+       interactivo (hover/click/pulse). */
     .timeline-node {
       --id-color: #fb923c;
       position: absolute;
-      /* top se asigna inline; left es el x del punto; lo empujamos a la
-         derecha del punto mediante translate. */
-      transform: translate(10px, -50%);
+      /* left = leftPx, top = laneCenter; el óvalo queda centrado en el
+         punto de fallo para que la barra termine exactamente en él. */
+      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 8px;
       pointer-events: none;
       z-index: 4;
       white-space: nowrap;
@@ -1367,17 +1327,41 @@
       text-transform: uppercase;
       color: #2a0a12;
       background: var(--id-color);
-      padding: 2px 8px;
+      padding: 2px 10px;
       border-radius: 999px;
       border: 1.5px solid #1a0610;
       box-shadow: 0 1px 3px rgba(0,0,0,.35);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform .15s, border-color .15s, box-shadow .15s;
     }
-    .timeline-node-date {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .35px;
-      color: rgba(255,255,255,.85);
+    .timeline-node-id:hover,
+    .timeline-node.is-active .timeline-node-id {
+      transform: scale(1.12);
+      border-color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,.45);
     }
+
+    /* Palpitación amarilla canaria — se aplica al óvalo "Fallo" */
+    @keyframes tl-flash {
+      0%   {
+        background: radial-gradient(90deg, #fff 0%, #fef08a 55%, #fde047 100%);
+        box-shadow:
+          0 0 0 4px rgba(254,240,138,.55),
+          0 0 14px #fef08a,
+          0 0 26px rgba(254,240,138,.65),
+          inset 0 0 4px #fff;
+        border-color: #fff;
+        transform: scale(1.3);
+        color: #1a0610;
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    .timeline-node-id.pulse-tl { animation: tl-flash 1s ease-out 1; }
+    /* Palpitación sostenida (3s) — se aplica al click del ID en la leyenda */
+    .timeline-node-id.pulse-tl-hold { animation: tl-flash 1s ease-out 3; }
     .timeline-empty {
       text-align: center;
       color: rgba(255,255,255,.40);
@@ -1386,8 +1370,7 @@
       padding: 18px 0;
     }
 
-    /* Filtro: oculta puntos/nodos cuyo checkbox está desmarcado */
-    .timeline-point.is-hidden,
+    /* Filtro: oculta nodos cuyo checkbox está desmarcado */
     .timeline-node.is-hidden { display: none !important; }
 
     /* Línea vertical punteada que baja de cada punto hasta el eje del tiempo */
@@ -2805,23 +2788,24 @@
         return;
       }
 
-      // Buscamos la celda del día y el punto del timeline correspondientes
+      // Buscamos la celda del día y el óvalo "Fallo" del timeline
       let firstCell = null;
       mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
         const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
         if (arr.includes(idx) && !firstCell) firstCell = cell;
       });
-      const pt = mxTimeline.querySelector(`.timeline-point[data-idx="${idx}"]`);
+      const node   = mxTimeline.querySelector(`.timeline-node[data-idx="${idx}"]`);
+      const nodeId = node ? node.querySelector('.timeline-node-id') : null;
 
-      const target = firstCell || pt || mxCalendar.closest('.msection');
+      const target = firstCell || node || mxCalendar.closest('.msection');
       smoothScrollTo(target, 'center');
 
-      // Scroll horizontal del timeline para que el punto quede visible
+      // Scroll horizontal del timeline para que el óvalo quede visible
       const scrollArea = mxTimeline.querySelector('.timeline-scroll');
-      if (pt && scrollArea) {
-        const ptLeft = parseFloat(pt.style.left) || 0;
+      if (node && scrollArea) {
+        const nodeLeft = parseFloat(node.style.left) || 0;
         const visW = scrollArea.clientWidth;
-        const desired = Math.max(0, ptLeft - visW / 2);
+        const desired = Math.max(0, nodeLeft - visW / 2);
         scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
       }
 
@@ -2830,7 +2814,7 @@
           const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
           if (arr.includes(idx)) pulse(cell, 'pulse-cal');
         });
-        pulse(pt, 'pulse-tl');
+        pulse(nodeId, 'pulse-tl');
       }, 320);
     }
 
@@ -2844,7 +2828,7 @@
     // Aplica el estado oculto/visible a puntos, nodos, barras de proyección
     // y filas de la leyenda
     function applyFilterVisibility() {
-      mxTimeline.querySelectorAll('.timeline-point[data-idx], .timeline-node[data-idx], .timeline-projection[data-idx], .timeline-drop[data-idx], .timeline-date-mark[data-idx]').forEach(el => {
+      mxTimeline.querySelectorAll('.timeline-node[data-idx], .timeline-projection[data-idx], .timeline-drop[data-idx], .timeline-date-mark[data-idx]').forEach(el => {
         el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
       });
       mxTimeline.querySelectorAll('.timeline-legend-item[data-idx]').forEach(row => {
@@ -2881,7 +2865,7 @@
         const idxs = (el.dataset.idxs || '').split(',').filter(Boolean).map(Number);
         el.classList.toggle('is-active', idxs.includes(idx));
       });
-      mxTimeline.querySelectorAll('.timeline-point').forEach(el => {
+      mxTimeline.querySelectorAll('.timeline-node').forEach(el => {
         el.classList.toggle('is-active', +el.dataset.idx === idx);
       });
       mxTimeline.querySelectorAll('.timeline-projection').forEach(el => {
@@ -3114,14 +3098,15 @@
           // El click del checkbox ya hizo stopPropagation — aquí solo enfoque.
           if (procState.hiddenIdxs.has(item.idx)) return;
           setActive(item.idx);
-          const pt = mxTimeline.querySelector(`.timeline-point[data-idx="${item.idx}"]`);
+          const node   = mxTimeline.querySelector(`.timeline-node[data-idx="${item.idx}"]`);
+          const nodeId = node ? node.querySelector('.timeline-node-id') : null;
           const scrollArea = mxTimeline.querySelector('.timeline-scroll');
-          if (pt && scrollArea) {
-            const ptLeft = parseFloat(pt.style.left) || 0;
-            const desired = Math.max(0, ptLeft - scrollArea.clientWidth / 2);
+          if (node && scrollArea) {
+            const nodeLeft = parseFloat(node.style.left) || 0;
+            const desired = Math.max(0, nodeLeft - scrollArea.clientWidth / 2);
             scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
           }
-          pulse(pt, 'pulse-tl-hold', 3000);
+          pulse(nodeId, 'pulse-tl-hold', 3000);
         });
         legendList.appendChild(row);
       });
@@ -3172,24 +3157,56 @@
       track.style.width = totalW + 'px';
 
       // Carriles: cada uno corresponde 1-a-1 con una fila de la leyenda.
-      const LANE_H     = 26;  // debe coincidir con la altura de .timeline-legend-item
-      const LANE_GAP   = 5;   // debe coincidir con el gap del .timeline-legend-list
-      const TRACK_VPAD = 2;   // leve margen superior/inferior dentro del track
-      const AXIS_GAP   = 14;  // espacio entre el último carril y el eje
-      const DATE_ROW_H = 26;  // alto reservado bajo el eje para las etiquetas de fecha
+      const LANE_H       = 26;  // debe coincidir con la altura de .timeline-legend-item
+      const LANE_GAP     = 5;   // debe coincidir con el gap del .timeline-legend-list
+      const TRACK_VPAD   = 2;   // leve margen superior/inferior dentro del track
+      const AXIS_GAP     = 14;  // espacio entre el último carril y el eje
+      const DATE_ROW_H   = 20;  // alto de una fila de etiqueta de fecha
+      const DATE_ROW_GAP = 4;   // gap vertical entre filas de etiquetas
+      const DATE_MARK_W  = 78;  // ancho estimado de cada pastilla de fecha
+      const DATE_HSPACE  = 6;   // gap horizontal mínimo entre pastillas contiguas
+
+      // 1) Pre-calcular posiciones X de cada item y asignarle una fila
+      //    para que las fechas no se encimen horizontalmente.
+      const positions = dated.map((item, i) => {
+        const d = item.fechaDate;
+        const mi = months.findIndex(m => m.getMonth() === d.getMonth() && m.getFullYear() === d.getFullYear());
+        const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        const dayRatio = daysInMonth > 1 ? (d.getDate() - 1) / (daysInMonth - 1) : 0.5;
+        const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
+        const laneCenter = TRACK_VPAD + i * (LANE_H + LANE_GAP) + LANE_H / 2;
+        return { item, i, leftPx, laneCenter };
+      });
+
+      // Asignar fila de etiqueta de fecha recorriendo los items por X
+      // creciente; cada uno va a la primera fila donde no se solapa.
+      const orderByX = [...positions].sort((a, b) => a.leftPx - b.leftPx);
+      const rowRightEdge = []; // derecha ocupada por fila (en px)
+      const rowByIdx = new Map();
+      orderByX.forEach(pos => {
+        const leftEdge  = pos.leftPx - DATE_MARK_W / 2;
+        const rightEdge = pos.leftPx + DATE_MARK_W / 2;
+        let chosen = -1;
+        for (let r = 0; r < rowRightEdge.length; r++) {
+          if (rowRightEdge[r] + DATE_HSPACE <= leftEdge) { chosen = r; break; }
+        }
+        if (chosen === -1) { chosen = rowRightEdge.length; rowRightEdge.push(0); }
+        rowRightEdge[chosen] = rightEdge;
+        rowByIdx.set(pos.item.idx, chosen);
+      });
+      const totalDateRows = Math.max(1, rowRightEdge.length);
 
       const lanesAreaH = TRACK_VPAD * 2
                        + dated.length * LANE_H
                        + Math.max(0, dated.length - 1) * LANE_GAP;
       const axisY  = lanesAreaH + AXIS_GAP;
-      const trackH = axisY + DATE_ROW_H;
+      const datesAreaH = totalDateRows * DATE_ROW_H + (totalDateRows - 1) * DATE_ROW_GAP + 8;
+      const trackH = axisY + datesAreaH;
 
       track.style.height = trackH + 'px';
       track.style.setProperty('--axis-y', axisY + 'px');
 
       // Colocar la marca amarilla (::after) de la leyenda al mismo Y que el eje.
-      // En coords relativas al container .timeline: padding-top 14 + months 22
-      // + margin-bottom months 6 + axisY_en_track  = 42 + axisY.
       const notchY = 42 + axisY;
       legend.style.setProperty('--notch-y', notchY + 'px');
 
@@ -3202,19 +3219,13 @@
         track.appendChild(sep);
       });
 
-      // Dibujar cada licitación en su carril
-      dated.forEach((item, i) => {
+      // 2) Dibujar cada licitación
+      positions.forEach(({ item, leftPx, laneCenter }) => {
         const d = item.fechaDate;
-        const mi = months.findIndex(m => m.getMonth() === d.getMonth() && m.getFullYear() === d.getFullYear());
-        const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-        const dayRatio = daysInMonth > 1 ? (d.getDate() - 1) / (daysInMonth - 1) : 0.5;
-        // Margen interno del 8% dentro del mes para que el punto no pegue al separador
-        const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
-        // Centro vertical del carril i (alineado con la fila i de la leyenda)
-        const laneCenter = TRACK_VPAD + i * (LANE_H + LANE_GAP) + LANE_H / 2;
         const hidden = procState.hiddenIdxs.has(item.idx);
+        const dateRow = rowByIdx.get(item.idx) || 0;
 
-        // Barra de proyección (camino de baja opacidad) desde x=0 al punto
+        // Barra de proyección desde x=0 al óvalo Fallo
         const proj = document.createElement('div');
         proj.className = 'timeline-projection' + (hidden ? ' is-hidden' : '');
         proj.dataset.idx = item.idx;
@@ -3224,7 +3235,7 @@
         proj.style.setProperty('--proj-color', item.color);
         track.appendChild(proj);
 
-        // Línea punteada vertical desde el punto hasta el eje
+        // Línea punteada vertical desde el óvalo Fallo hasta el eje
         const drop = document.createElement('div');
         drop.className = 'timeline-drop' + (hidden ? ' is-hidden' : '');
         drop.dataset.idx = item.idx;
@@ -3234,16 +3245,21 @@
         drop.style.setProperty('--drop-color', item.color);
         track.appendChild(drop);
 
-        // Punto al final de la barra
-        const point = document.createElement('div');
-        point.className = 'timeline-point' + (hidden ? ' is-hidden' : '');
-        point.dataset.idx = item.idx;
-        point.style.left = leftPx + 'px';
-        point.style.top = laneCenter + 'px';
-        point.style.setProperty('--pt-color', item.color);
-        point.title = `${item.id} — ${item.fechaStr}`;
-        point.addEventListener('mouseenter', () => setActive(item.idx));
-        point.addEventListener('click', () => {
+        // Óvalo "Fallo" centrado en el punto de fallo (sin círculo intermedio).
+        // Es el elemento clicable y el que palpita.
+        const node = document.createElement('div');
+        node.className = 'timeline-node' + (hidden ? ' is-hidden' : '');
+        node.dataset.idx = item.idx;
+        node.style.left = leftPx + 'px';
+        node.style.top = laneCenter + 'px';
+        node.style.setProperty('--id-color', item.color);
+        node.innerHTML = `
+          <div class="timeline-node-id" title="${item.id} — ${item.fechaStr}">Fallo</div>
+        `;
+        const nodeId = node.querySelector('.timeline-node-id');
+        nodeId.addEventListener('mouseenter', () => setActive(item.idx));
+        nodeId.addEventListener('click', (e) => {
+          e.stopPropagation();
           setActive(item.idx);
           let firstCell = null;
           mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
@@ -3254,28 +3270,16 @@
           setTimeout(() => pulse(firstCell, 'pulse-cal'), 320);
         });
 
-        // Etiqueta "Fallo" (sin fecha) a la derecha del punto en el carril
-        const node = document.createElement('div');
-        node.className = 'timeline-node' + (hidden ? ' is-hidden' : '');
-        node.dataset.idx = item.idx;
-        node.style.left = leftPx + 'px';
-        node.style.top = laneCenter + 'px';
-        node.style.setProperty('--id-color', item.color);
-        node.innerHTML = `
-          <div class="timeline-node-id" title="${item.id}">Fallo</div>
-        `;
-
-        // Etiqueta de fecha bajo el eje, alineada con la línea punteada
+        // Etiqueta de fecha en la fila asignada (evita solapes)
         const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
         const dateMark = document.createElement('div');
         dateMark.className = 'timeline-date-mark' + (hidden ? ' is-hidden' : '');
         dateMark.dataset.idx = item.idx;
         dateMark.style.left = leftPx + 'px';
-        dateMark.style.top = (axisY + 8) + 'px';
+        dateMark.style.top = (axisY + 8 + dateRow * (DATE_ROW_H + DATE_ROW_GAP)) + 'px';
         dateMark.style.setProperty('--date-color', item.color);
         dateMark.textContent = dateStr;
 
-        track.appendChild(point);
         track.appendChild(node);
         track.appendChild(dateMark);
       });
