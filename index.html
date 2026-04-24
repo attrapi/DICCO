@@ -1468,6 +1468,49 @@
     }
     .timeline-date-mark.is-hidden { display: none !important; }
 
+    /* Hitos intermedios (Convocatoria, Visita al sitio, Junta de aclaraciones,
+       Apertura de proposiciones…) sobre la misma barra de proyección del
+       contrato, con su propia línea punteada al eje y pastilla reducida. */
+    .timeline-hito {
+      --id-color: #fb923c;
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background: var(--id-color);
+      border: 1.5px solid #1a0610;
+      transform: translate(-50%, -50%) rotate(45deg);
+      z-index: 3;
+      box-shadow: 0 1px 2px rgba(0,0,0,.4);
+      pointer-events: auto;
+      cursor: help;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .timeline-hito:hover {
+      transform: translate(-50%, -50%) rotate(45deg) scale(1.25);
+      box-shadow: 0 2px 6px rgba(0,0,0,.5);
+    }
+    .timeline-hito.is-hidden { display: none !important; }
+
+    .timeline-hito-drop {
+      --drop-color: #fb923c;
+      position: absolute;
+      width: 0;
+      border-left: 1px dashed color-mix(in srgb, var(--drop-color) 35%, rgba(255,255,255,.18));
+      transform: translateX(-50%);
+      z-index: 1;
+      pointer-events: none;
+      opacity: .45;
+    }
+    .timeline-hito-drop.is-hidden { display: none !important; }
+
+    .timeline-date-mark--hito {
+      font-size: 8px;
+      font-weight: 700;
+      padding: 1.5px 6px;
+      opacity: .88;
+      letter-spacing: .2px;
+    }
+
     /* ── Botón "Reporte" dentro del modal ── */
     .modal-report-btn {
       flex-shrink: 0;
@@ -1951,6 +1994,34 @@
                            target="_blank" rel="noopener noreferrer">
                           LO-09-D00-009D00999-N-32-2026
                         </a>
+                      </div>
+                      <div class="proc-meta-row">
+                        <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                          <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span class="proc-meta"><strong>Convocatoria:</strong> 17/03/2026</span>
+                      </div>
+                      <div class="proc-meta-row">
+                        <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/>
+                          <path d="M8 12.5l3 3 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="proc-meta"><strong>Visita al sitio:</strong> Sí</span>
+                      </div>
+                      <div class="proc-meta-row">
+                        <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                          <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span class="proc-meta"><strong>Junta de aclaraciones:</strong> 22/03/2026 11:00</span>
+                      </div>
+                      <div class="proc-meta-row">
+                        <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                          <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span class="proc-meta"><strong>Apertura de proposiciones:</strong> 09/04/2026 13:00</span>
                       </div>
                       <div class="proc-meta-row">
                         <svg class="proc-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -2767,6 +2838,18 @@
       return new Date(+y, +mo - 1, +d, +h, +mi);
     }
 
+    // Clasifica la etiqueta de un proc-meta a uno de los hitos del procedimiento.
+    // Tolera las redacciones típicas en ComprasMX/LOPSRM.
+    function resolveStage(label) {
+      if (/fallo/i.test(label)) return 'Fallo';
+      if (/preconvocatoria/i.test(label)) return 'Preconvocatoria';
+      if (/convocatoria|publicaci[oó]n/i.test(label)) return 'Convocatoria';
+      if (/visita/i.test(label)) return 'Visita al sitio';
+      if (/junta.*aclaracion/i.test(label)) return 'Junta de aclaraciones';
+      if (/apertura|presentaci[oó]n.*proposicion|apertura.*proposicion/i.test(label)) return 'Apertura de proposiciones';
+      return null;
+    }
+
     // Extrae los datos de un acordeón (subdirector) leyendo su faceta "En proceso"
     function extractProceso(acc) {
       const facet = acc.querySelector('.facet--proceso');
@@ -2776,15 +2859,30 @@
         const idEl  = card.querySelector('.proc-id');
         const id    = idEl?.textContent.trim() || '';
         const href  = idEl?.getAttribute('href') || '#';
-        const metaStr  = card.querySelector('.proc-meta')?.textContent.trim() || '';
-        const metaVal  = metaStr.replace(/^.*?:\s*/, '');
-        const fechaDate = parseFallo(metaVal);
-        return {
-          title, id, href,
-          fechaStr:   fechaDate ? metaVal : '',
-          estatusStr: !fechaDate && metaVal ? metaVal : '',
-          fechaDate
-        };
+
+        // Recorremos TODAS las filas de metadata: cada "Label: Valor" puede ser
+        // un hito (Convocatoria, Visita al sitio, Junta de aclaraciones,
+        // Apertura de proposiciones, Fallo…) o el estatus textual.
+        const metaRows = Array.from(card.querySelectorAll('.proc-meta-row')).map(row => {
+          const txt = row.querySelector('.proc-meta')?.textContent.trim() || '';
+          const m = txt.match(/^(.+?):\s*(.+)$/);
+          return { label: (m ? m[1] : txt).trim(), value: (m ? m[2] : '').trim() };
+        });
+
+        const hitos = [];
+        let estatusStr = '';
+        metaRows.forEach(r => {
+          if (r.label.toLowerCase() === 'estatus') { estatusStr = r.value; return; }
+          const stage = resolveStage(r.label);
+          if (!stage) return;
+          hitos.push({ stage, rawValue: r.value, date: parseFallo(r.value) });
+        });
+
+        const falloHito = hitos.find(h => h.stage === 'Fallo');
+        const fechaDate = falloHito?.date || null;
+        const fechaStr  = fechaDate ? falloHito.rawValue : '';
+
+        return { title, id, href, fechaStr, estatusStr, fechaDate, hitos };
       });
 
       // Los que NO tienen fecha de fallo caen al final; los que sí, ordenados por fecha ascendente
@@ -2951,7 +3049,7 @@
     // Aplica el estado oculto/visible a puntos, nodos, barras de proyección
     // y filas de la leyenda
     function applyFilterVisibility() {
-      mxTimeline.querySelectorAll('.timeline-node[data-idx], .timeline-projection[data-idx], .timeline-drop[data-idx], .timeline-date-mark[data-idx]').forEach(el => {
+      mxTimeline.querySelectorAll('.timeline-node[data-idx], .timeline-projection[data-idx], .timeline-drop[data-idx], .timeline-hito[data-idx], .timeline-hito-drop[data-idx], .timeline-date-mark[data-idx]').forEach(el => {
         el.classList.toggle('is-hidden', procState.hiddenIdxs.has(+el.dataset.idx));
       });
       mxTimeline.querySelectorAll('.timeline-legend-item[data-idx]').forEach(row => {
@@ -3026,11 +3124,16 @@
         card.className = 'proc-card';
         card.dataset.idx = item.idx;
         card.style.setProperty('--card-color', item.color);
-        const stagesHtml = STAGES.map((name, si) => {
-          const isFallo = si === STAGES.length - 1;
-          // Por ahora solo Fallo tiene dato. El resto queda vacío hasta que
-          // se llene la información, y muestra borde punteado.
-          const value = isFallo ? item.fechaStr : '';
+        // Valor de cada etapa: lo tomamos de item.hitos (si existe) y como
+        // respaldo para Fallo usamos item.fechaStr. Las etapas sin dato
+        // conservan el borde punteado.
+        const hitosByStage = {};
+        (item.hitos || []).forEach(h => { hitosByStage[h.stage] = h; });
+        if (!hitosByStage['Fallo'] && item.fechaStr) {
+          hitosByStage['Fallo'] = { stage: 'Fallo', rawValue: item.fechaStr };
+        }
+        const stagesHtml = STAGES.map(name => {
+          const value = hitosByStage[name]?.rawValue || '';
           const hasValue = !!value;
           return `
             <div class="stage-item${hasValue ? ' has-value' : ''}">
@@ -3276,9 +3379,15 @@
       // cada mes ocupe un "pantallazo" completo.
       mxTimeline.appendChild(scroll);
 
-      // Lista ordenada de meses entre el primer y el último fallo
-      const first = dated[0].fechaDate;
-      const last  = dated[dated.length - 1].fechaDate;
+      // Lista ordenada de meses entre el hito más temprano y el Fallo más
+      // tardío (los hitos intermedios pueden caer meses antes del Fallo).
+      const allDatesMs = [];
+      dated.forEach(item => {
+        allDatesMs.push(item.fechaDate.getTime());
+        (item.hitos || []).forEach(h => { if (h.date) allDatesMs.push(h.date.getTime()); });
+      });
+      const first = new Date(Math.min(...allDatesMs));
+      const last  = new Date(Math.max(...allDatesMs));
       const months = [];
       let cur = new Date(first.getFullYear(), first.getMonth(), 1);
       const endCur = new Date(last.getFullYear(), last.getMonth(), 1);
@@ -3322,23 +3431,57 @@
       const DATE_MARK_W  = 78;  // ancho estimado de cada pastilla de fecha
       const DATE_HSPACE  = 6;   // gap horizontal mínimo entre pastillas contiguas
 
-      // 1) Pre-calcular posiciones X de cada item y asignarle una fila
-      //    para que las fechas no se encimen horizontalmente.
-      const positions = dated.map((item, i) => {
-        const d = item.fechaDate;
+      // Abreviaciones para las pastillas de fecha de los hitos (el Fallo
+      // conserva su pastilla "normal" sin prefijo).
+      const STAGE_SHORT = {
+        'Preconvocatoria': 'Precon',
+        'Convocatoria': 'Conv',
+        'Visita al sitio': 'Visita',
+        'Junta de aclaraciones': 'Junta',
+        'Apertura de proposiciones': 'Apert',
+        'Fallo': 'Fallo',
+      };
+
+      // 1) Pre-calcular posiciones X de CADA marcador (Fallo + hitos con
+      //    fecha) y asignarles una fila para que las pastillas de fecha
+      //    no se encimen horizontalmente.
+      function leftPxFromDate(d) {
         const mi = months.findIndex(m => m.getMonth() === d.getMonth() && m.getFullYear() === d.getFullYear());
+        if (mi < 0) return null;
         const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
         const dayRatio = daysInMonth > 1 ? (d.getDate() - 1) / (daysInMonth - 1) : 0.5;
-        const leftPx = mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
+        return mi * MONTH_W + (0.08 + dayRatio * 0.84) * MONTH_W;
+      }
+
+      const positions = [];       // Fallo markers (uno por contrato) — conserva el nombre
+      const hitoPositions = [];   // Hitos distintos de Fallo (con fecha)
+      dated.forEach((item, i) => {
         const laneCenter = TRACK_VPAD + i * (LANE_H + LANE_GAP) + LANE_H / 2;
-        return { item, i, leftPx, laneCenter };
+        // Fallo
+        const fLeft = leftPxFromDate(item.fechaDate);
+        if (fLeft != null) {
+          positions.push({
+            item, i, laneCenter, leftPx: fLeft,
+            stage: 'Fallo', date: item.fechaDate, rawValue: item.fechaStr, isFallo: true,
+          });
+        }
+        // Otros hitos con fecha
+        (item.hitos || []).forEach(h => {
+          if (h.stage === 'Fallo' || !h.date) return;
+          const hLeft = leftPxFromDate(h.date);
+          if (hLeft == null) return;
+          hitoPositions.push({
+            item, i, laneCenter, leftPx: hLeft,
+            stage: h.stage, date: h.date, rawValue: h.rawValue, isFallo: false,
+          });
+        });
       });
 
-      // Asignar fila de etiqueta de fecha recorriendo los items por X
-      // creciente; cada uno va a la primera fila donde no se solapa.
-      const orderByX = [...positions].sort((a, b) => a.leftPx - b.leftPx);
+      // Todos los marcadores con fecha entran al row-assignment.
+      const allMarkers = [...positions, ...hitoPositions];
+      const orderByX = [...allMarkers].sort((a, b) => a.leftPx - b.leftPx);
       const rowRightEdge = []; // derecha ocupada por fila (en px)
-      const rowByIdx = new Map();
+      const rowByMarker = new Map();
       orderByX.forEach(pos => {
         const leftEdge  = pos.leftPx - DATE_MARK_W / 2;
         const rightEdge = pos.leftPx + DATE_MARK_W / 2;
@@ -3348,7 +3491,7 @@
         }
         if (chosen === -1) { chosen = rowRightEdge.length; rowRightEdge.push(0); }
         rowRightEdge[chosen] = rightEdge;
-        rowByIdx.set(pos.item.idx, chosen);
+        rowByMarker.set(pos, chosen);
       });
       const totalDateRows = Math.max(1, rowRightEdge.length);
 
@@ -3375,11 +3518,11 @@
         track.appendChild(sep);
       });
 
-      // 2) Dibujar cada licitación
-      positions.forEach(({ item, leftPx, laneCenter }) => {
-        const d = item.fechaDate;
+      // 2) Dibujar cada licitación: barra de proyección + Fallo + hitos.
+      positions.forEach(pos => {
+        const { item, leftPx, laneCenter, date, rawValue } = pos;
         const hidden = procState.hiddenIdxs.has(item.idx);
-        const dateRow = rowByIdx.get(item.idx) || 0;
+        const dateRow = rowByMarker.get(pos) || 0;
 
         // Barra de proyección desde x=0 al óvalo Fallo
         const proj = document.createElement('div');
@@ -3410,7 +3553,7 @@
         node.style.top = laneCenter + 'px';
         node.style.setProperty('--id-color', item.color);
         node.innerHTML = `
-          <div class="timeline-node-id" title="${item.id} — ${item.fechaStr}">Fallo</div>
+          <div class="timeline-node-id" title="${item.id} — ${rawValue}">Fallo</div>
         `;
         const nodeId = node.querySelector('.timeline-node-id');
         nodeId.addEventListener('mouseenter', () => setActive(item.idx));
@@ -3426,8 +3569,8 @@
           setTimeout(() => pulse(firstCell, 'pulse-cal'), 320);
         });
 
-        // Etiqueta de fecha en la fila asignada (evita solapes)
-        const dateStr = `${String(d.getDate()).padStart(2,'0')}-${MESES_CORTOS[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
+        // Etiqueta de fecha del Fallo en la fila asignada (evita solapes)
+        const dateStr = `${String(date.getDate()).padStart(2,'0')}-${MESES_CORTOS[date.getMonth()]}-${String(date.getFullYear()).slice(-2)}`;
         const dateMark = document.createElement('div');
         dateMark.className = 'timeline-date-mark' + (hidden ? ' is-hidden' : '');
         dateMark.dataset.idx = item.idx;
@@ -3437,6 +3580,46 @@
         dateMark.textContent = dateStr;
 
         track.appendChild(node);
+        track.appendChild(dateMark);
+      });
+
+      // 3) Dibujar los hitos intermedios (Convocatoria, Visita al sitio,
+      //    Junta de aclaraciones, Apertura de proposiciones…): un rombo
+      //    sobre el carril + línea punteada al eje + pastilla con la
+      //    abreviación de la etapa y la fecha.
+      hitoPositions.forEach(pos => {
+        const { item, leftPx, laneCenter, stage, date, rawValue } = pos;
+        const hidden = procState.hiddenIdxs.has(item.idx);
+        const dateRow = rowByMarker.get(pos) || 0;
+
+        const hDrop = document.createElement('div');
+        hDrop.className = 'timeline-hito-drop' + (hidden ? ' is-hidden' : '');
+        hDrop.dataset.idx = item.idx;
+        hDrop.style.left = leftPx + 'px';
+        hDrop.style.top = laneCenter + 'px';
+        hDrop.style.height = Math.max(0, axisY - laneCenter) + 'px';
+        hDrop.style.setProperty('--drop-color', item.color);
+        track.appendChild(hDrop);
+
+        const hito = document.createElement('div');
+        hito.className = 'timeline-hito' + (hidden ? ' is-hidden' : '');
+        hito.dataset.idx = item.idx;
+        hito.dataset.stage = stage;
+        hito.style.left = leftPx + 'px';
+        hito.style.top = laneCenter + 'px';
+        hito.style.setProperty('--id-color', item.color);
+        hito.title = `${stage} — ${rawValue}`;
+        hito.addEventListener('mouseenter', () => setActive(item.idx));
+        track.appendChild(hito);
+
+        const dateStr = `${String(date.getDate()).padStart(2,'0')}-${MESES_CORTOS[date.getMonth()]}-${String(date.getFullYear()).slice(-2)}`;
+        const dateMark = document.createElement('div');
+        dateMark.className = 'timeline-date-mark timeline-date-mark--hito' + (hidden ? ' is-hidden' : '');
+        dateMark.dataset.idx = item.idx;
+        dateMark.style.left = leftPx + 'px';
+        dateMark.style.top = (axisY + 8 + dateRow * (DATE_ROW_H + DATE_ROW_GAP)) + 'px';
+        dateMark.style.setProperty('--date-color', item.color);
+        dateMark.textContent = `${STAGE_SHORT[stage] || stage} ${dateStr}`;
         track.appendChild(dateMark);
       });
 
