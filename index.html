@@ -2255,6 +2255,9 @@
     </div>
   </div>
 
+  <!-- Contenedor exclusivo del reporte PDF (solo visible al imprimir) -->
+  <div id="print-report" aria-hidden="true"></div>
+
   <!-- Toast global: fuera del overlay para que position:fixed quede relativo al viewport
        (el overlay usa backdrop-filter, que crea containing block para sus fixed descendants) -->
   <div class="modal-toast" id="modal-toast" role="status" aria-live="polite">
@@ -3114,9 +3117,6 @@
 
     if (reportBtn) reportBtn.addEventListener('click', generateReport);
   </script>
-
-  <!-- Contenedor exclusivo del reporte PDF (solo visible al imprimir) -->
-  <div id="print-report" aria-hidden="true"></div>
 
 </body>
 </html>
