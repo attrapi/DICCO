@@ -1736,26 +1736,38 @@
         box-sizing: border-box;
       }
       #print-report .pr-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
         border-bottom: 1.5px solid #691c32;
         padding-bottom: 10px;
         margin-bottom: 14px;
       }
-      #print-report .pr-header-text {
-        flex: 1;
-        min-width: 0;
+
+      /* ─── Repetición en cada página impresa ──────────────────────
+         La única forma cross-browser confiable de repetir un header
+         y un footer en cada hoja al imprimir es envolver el contenido
+         en un <table> con <thead> (encabezado corrido) y <tfoot>
+         (pie de página corrido). Los navegadores (Chrome, Edge,
+         Firefox) los repiten automáticamente al saltar de página. */
+      #print-report .pr-table {
+        width: 100%;
+        border-collapse: collapse;
       }
-      #print-report .pr-header-logo {
-        flex-shrink: 0;
+      #print-report .pr-table thead { display: table-header-group; }
+      #print-report .pr-table tfoot { display: table-footer-group; }
+      #print-report .pr-table td {
+        padding: 0;
+        vertical-align: top;
+      }
+      #print-report .pr-running-header {
+        text-align: right;
+        padding-bottom: 6px;
+      }
+      #print-report .pr-running-header img {
         max-width: 220px;
-        max-height: 70px;
+        max-height: 55px;
         height: auto;
         width: auto;
         object-fit: contain;
-        align-self: center;
+        display: inline-block;
       }
       #print-report .pr-eyebrow {
         font-size: 7.5pt;
@@ -4222,31 +4234,47 @@
         `;
       }
 
+      // Usamos un <table> con <thead>/<tfoot> para que el logo de
+      // ATTRAPI (encabezado) y la imagen de piedepágina (pie) se
+      // repitan automáticamente en cada hoja impresa.
       printReport.innerHTML = `
-        <div class="pr-header">
-          <div class="pr-header-text">
-            <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
-            <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
-            <div class="pr-sub">${escapeHtml(sub)}</div>
-            <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
-          </div>
-          <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
-        </div>
+        <table class="pr-table">
+          <thead>
+            <tr><td>
+              <div class="pr-running-header">
+                <img src="ATTRAPI.png" alt="ATTRAPI">
+              </div>
+            </td></tr>
+          </thead>
+          <tbody>
+            <tr><td>
+              <div class="pr-header">
+                <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
+                <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
+                <div class="pr-sub">${escapeHtml(sub)}</div>
+                <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
+              </div>
 
-        <div class="pr-section">
-          <div class="pr-section-title">Procedimientos de contratación</div>
-          ${listHtml}
-        </div>
+              <div class="pr-section">
+                <div class="pr-section-title">Procedimientos de contratación</div>
+                ${listHtml}
+              </div>
 
-        <div class="pr-section">
-          <div class="pr-section-title">Línea del tiempo</div>
-          ${timelineHtml}
-        </div>
-
-        <div class="pr-footer">
-          <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
-          <div class="pr-footer-text">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
-        </div>
+              <div class="pr-section">
+                <div class="pr-section-title">Línea del tiempo</div>
+                ${timelineHtml}
+              </div>
+            </td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>
+              <div class="pr-footer">
+                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+                <div class="pr-footer-text">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
+              </div>
+            </td></tr>
+          </tfoot>
+        </table>
       `;
     }
 
