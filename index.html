@@ -584,6 +584,12 @@
       background: #fb923c;
       box-shadow: 0 0 6px rgba(251,146,60,.7);
     }
+    /* Modal abierto desde "Formalizado" → cambia el acento a verde */
+    .modal-overlay[data-mode="formalizado"] .modal-eyebrow { color: #6ee7b7; }
+    .modal-overlay[data-mode="formalizado"] .modal-eyebrow::before {
+      background: #34d399;
+      box-shadow: 0 0 6px rgba(52,211,153,.7);
+    }
     .modal-title {
       font-size: clamp(14px, 2vw, 18px);
       font-weight: 900;
@@ -2556,7 +2562,7 @@
     <div class="modal" role="document">
       <header class="modal-header">
         <div class="modal-header-info">
-          <div class="modal-eyebrow">En proceso</div>
+          <div class="modal-eyebrow" id="proc-modal-eyebrow">En proceso</div>
           <div class="modal-title" id="proc-modal-title">—</div>
           <div class="modal-subtitle" id="proc-modal-subtitle"></div>
         </div>
@@ -2631,19 +2637,39 @@
 
   <script>
     /* ══════════════════════════════════════════════════════════
-       Auto-migración: si la fecha de fallo ya pasó, la tarjeta
-       se mueve de "En proceso" → "Formalizado" de la misma
-       subdirección. Corre ANTES de cablear el árbol de facetas
-       para que los contadores reflejen el estado final.
+       Auto-migración: si el día del Fallo ya pasó (estricto:
+       Fallo anterior al inicio del día actual), la tarjeta se
+       mueve de "En proceso" → "Formalizado" de la misma
+       subdirección. El día del Fallo la tarjeta SIGUE visible en
+       "En proceso"; migra al día siguiente. Corre ANTES de
+       cablear el árbol de facetas para que los contadores
+       reflejen el estado final.
        ══════════════════════════════════════════════════════════ */
     (function migrateExpired() {
-      const now = Date.now();
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const startOfTodayMs = startOfToday.getTime();
       const parseFallo = (str) => {
         if (!str) return null;
         const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
         if (!m) return null;
         const [, d, mo, y, h = '00', mi = '00'] = m;
         return new Date(+y, +mo - 1, +d, +h, +mi);
+      };
+
+      // Busca la fila "Fecha y hora del acto del Fallo" entre todas
+      // las metas de la tarjeta (no asumir que es la primera).
+      const findFalloDate = (card) => {
+        const rows = card.querySelectorAll('.proc-meta-row');
+        for (const row of rows) {
+          const txt = row.querySelector('.proc-meta')?.textContent.trim() || '';
+          const m = txt.match(/^(.+?):\s*(.+)$/);
+          if (!m) continue;
+          if (!/fallo/i.test(m[1])) continue;
+          const f = parseFallo(m[2].trim());
+          if (f) return f;
+        }
+        return null;
       };
 
       document.querySelectorAll('.acc-body').forEach(body => {
@@ -2657,14 +2683,14 @@
         if (!procItems || !formItems) return;
 
         Array.from(procItems.querySelectorAll('.proc-card')).forEach(card => {
-          const metaStr = card.querySelector('.proc-meta')?.textContent.trim() || '';
-          const fechaStr = metaStr.replace(/^.*?:\s*/, '');
-          const fecha = parseFallo(fechaStr);
+          const fecha = findFalloDate(card);
           if (!fecha) return;
-          if (fecha.getTime() >= now) return;
+          // Migra solo si la fecha de Fallo es estrictamente anterior
+          // al inicio del día actual: el mismo día del Fallo se queda.
+          if (fecha.getTime() >= startOfTodayMs) return;
 
-          // Quitar meta de fecha: Formalizado no la muestra
-          card.querySelector('.proc-meta-row')?.remove();
+          // Conservamos todas las meta rows: Formalizado mantiene la
+          // misma vista que En proceso (Apertura, Fallo, Estatus…).
 
           // Si había placeholder "Sin procesos registrados", fuera
           formItems.querySelector('.proc-empty')?.remove();
@@ -2773,22 +2799,12 @@
           badge.appendChild(svg);
 
           badge.addEventListener('click', (e) => {
-            // El badge "En proceso" abre el modal en lugar del acordeón.
-            if (isProceso) {
-              e.stopPropagation();
-              const acc = facet.closest('.acc');
-              openProcModal(acc);
-              return;
-            }
-
-            const isOpen = facet.classList.contains('facet-open');
-            facet.classList.toggle('facet-open', !isOpen);
-            badge.classList.toggle('is-open', !isOpen);
-            panel.style.maxHeight = isOpen ? '0' : inner.scrollHeight + 'px';
-
-            // Liberar el panel padre para que nunca recorte el contenido expandido
-            const accPanel = body.closest('.acc-panel');
-            if (accPanel) accPanel.style.maxHeight = 'none';
+            // Ambos badges ("En proceso" y "Formalizado") abren el
+            // modal con la misma vista (lista + calendario + timeline);
+            // cambia el modo según cuál se haya pulsado.
+            e.stopPropagation();
+            const acc = facet.closest('.acc');
+            openProcModal(acc, isProceso ? 'proceso' : 'formalizado');
           });
         }
 
@@ -2818,6 +2834,7 @@
     const PALETTE = ['#fb923c','#7dd3fc','#6ee7b7','#f9a8d4','#c4b5fd','#fde047','#fca5a5','#f7d98b'];
 
     const modal     = document.getElementById('proc-modal');
+    const modalEyebrow  = document.getElementById('proc-modal-eyebrow');
     const modalTitle    = document.getElementById('proc-modal-title');
     const modalSubtitle = document.getElementById('proc-modal-subtitle');
     const mxList     = document.getElementById('mx-list');
@@ -2827,7 +2844,7 @@
     const calPrev    = document.getElementById('cal-prev');
     const calNext    = document.getElementById('cal-next');
 
-    let procState = { items: [], calYear: 0, calMonth: 0, active: null, hiddenIdxs: new Set() };
+    let procState = { mode: 'proceso', items: [], calYear: 0, calMonth: 0, active: null, hiddenIdxs: new Set() };
 
     // Parsea "DD/MM/YYYY HH:MM" → Date (hora local)
     function parseFallo(str) {
@@ -2850,9 +2867,11 @@
       return null;
     }
 
-    // Extrae los datos de un acordeón (subdirector) leyendo su faceta "En proceso"
-    function extractProceso(acc) {
-      const facet = acc.querySelector('.facet--proceso');
+    // Extrae los datos de un acordeón (subdirector) leyendo la faceta
+    // indicada — por defecto "En proceso", pero también acepta
+    // "Formalizado" para que el modal funcione en ambos casos.
+    function extractProceso(acc, facetClass = 'facet--proceso') {
+      const facet = acc.querySelector('.' + facetClass);
       if (!facet) return [];
       const raw = Array.from(facet.querySelectorAll('.proc-card')).map(card => {
         const title = card.querySelector('.proc-title')?.textContent.trim() || '';
@@ -3660,16 +3679,24 @@
       });
     }
 
-    function openProcModal(acc) {
+    function openProcModal(acc, mode = 'proceso') {
       const role = acc.querySelector('.acc-role')?.textContent.trim() || '';
       const name = acc.querySelector('.acc-name')?.textContent.trim() || '';
-      const items = extractProceso(acc);
+      const facetClass = mode === 'formalizado' ? 'facet--formalizado' : 'facet--proceso';
+      const items = extractProceso(acc, facetClass);
 
+      const eyebrowLabel = mode === 'formalizado' ? 'Formalizado' : 'En proceso';
+      const subtitleLabel = mode === 'formalizado'
+        ? (items.length === 1 ? 'formalizado' : 'formalizados')
+        : (items.length === 1 ? 'proceso en curso' : 'procesos en curso');
+      modalEyebrow.textContent = eyebrowLabel;
+      modal.dataset.mode = mode;
       modalTitle.textContent = name || 'Procesos';
       modalSubtitle.textContent = role
-        ? `${role} · ${items.length} ${items.length === 1 ? 'proceso' : 'procesos'} en curso`
+        ? `${role} · ${items.length} ${subtitleLabel}`
         : '';
 
+      procState.mode = mode;
       procState.items = items;
       procState.active = null;
       procState.hiddenIdxs = new Set(); // arranca con todos los filtros activos
@@ -3813,7 +3840,7 @@
 
       printReport.innerHTML = `
         <div class="pr-header">
-          <div class="pr-eyebrow">Reporte · En proceso</div>
+          <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
           <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
           <div class="pr-sub">${escapeHtml(sub)}</div>
           <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
