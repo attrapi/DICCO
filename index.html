@@ -803,6 +803,57 @@
     .stage-item.has-value .stage-value {
       color: var(--card-color);
     }
+
+    /* Tarjeta del modal cuando el Fallo cae HOY: borde palpitante + chip
+       "Hoy es el Fallo" + el .stage-item de Fallo se sobresalta. */
+    @keyframes card-fallo-today {
+      0%, 100% {
+        box-shadow:
+          inset 0 0 0 1px rgba(254,240,138,.32),
+          0 0 0 0 rgba(254,240,138,0);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 0 1.5px rgba(254,240,138,.65),
+          0 0 16px 2px rgba(254,240,138,.35);
+      }
+    }
+    .modal-list .proc-card.is-fallo-today {
+      border-radius: 12px;
+      animation: card-fallo-today 2.4s ease-in-out infinite;
+    }
+    .modal-list .proc-card.is-fallo-today .proc-card-status {
+      border-left-color: rgba(254,240,138,.55);
+    }
+    .modal-list .proc-card.is-fallo-today .proc-card-status-value {
+      color: #fef9c3;
+      text-shadow: 0 0 10px rgba(254,240,138,.5);
+    }
+    .stage-item.is-fallo-today {
+      background: rgba(254,240,138,.18) !important;
+      border: 1px solid rgba(254,240,138,.70) !important;
+      animation: card-fallo-today 2.4s ease-in-out infinite;
+    }
+    .stage-item.is-fallo-today .stage-label { color: #fef9c3 !important; }
+    .stage-item.is-fallo-today .stage-value { color: #fef08a !important; }
+
+    /* Chip "Hoy es el Fallo" dentro de la tarjeta del modal — pegado
+       debajo del valor de fecha, en el mismo color canario. */
+    .proc-card-status-chip {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 8px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #1a0610;
+      background: linear-gradient(180deg, #fef08a 0%, #fde047 100%);
+      border-radius: 999px;
+      box-shadow: 0 0 8px rgba(254,240,138,.55);
+      white-space: nowrap;
+      align-self: flex-start;
+    }
     .modal-list .proc-card-status-label {
       font-size: 9px;
       font-weight: 800;
@@ -3208,11 +3259,25 @@
         mxList.innerHTML = '<div class="modal-empty">Sin procesos registrados</div>';
         return;
       }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayMs = today.getTime();
       procState.items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'proc-card';
         card.dataset.idx = item.idx;
         card.style.setProperty('--card-color', item.color);
+
+        // ¿La fecha del Fallo es HOY? Si sí, resaltamos toda la tarjeta,
+        // el .stage-item de Fallo y agregamos el chip "Hoy es el Fallo".
+        let isFalloToday = false;
+        if (item.fechaDate) {
+          const f = new Date(item.fechaDate);
+          f.setHours(0, 0, 0, 0);
+          isFalloToday = f.getTime() === todayMs;
+        }
+        if (isFalloToday) card.classList.add('is-fallo-today');
+
         // Valor de cada etapa: lo tomamos de item.hitos (si existe) y como
         // respaldo para Fallo usamos item.fechaStr. Las etapas sin dato
         // conservan el borde punteado.
@@ -3224,13 +3289,16 @@
         const stagesHtml = STAGES.map(name => {
           const value = hitosByStage[name]?.rawValue || '';
           const hasValue = !!value;
+          const isStageFalloToday = name === 'Fallo' && isFalloToday;
           return `
-            <div class="stage-item${hasValue ? ' has-value' : ''}">
+            <div class="stage-item${hasValue ? ' has-value' : ''}${isStageFalloToday ? ' is-fallo-today' : ''}">
               <div class="stage-label">${name}</div>
               ${hasValue ? `<div class="stage-value">${value}</div>` : ''}
             </div>
           `;
         }).join('');
+
+        const chipHtml = isFalloToday ? `<span class="proc-card-status-chip">Hoy es el Fallo</span>` : '';
 
         card.innerHTML = `
           <div class="proc-card-main">
@@ -3246,6 +3314,7 @@
           <div class="proc-card-status">
             ${item.fechaStr ? `<div class="proc-card-status-fallo">Fallo</div>` : ''}
             <div class="proc-card-status-value">${item.fechaStr || ''}</div>
+            ${chipHtml}
           </div>
           <div class="proc-card-stages">${stagesHtml}</div>
         `;
