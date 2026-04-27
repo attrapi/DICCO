@@ -1839,6 +1839,83 @@
         font-size: 8.5pt;
       }
 
+      /* Tira de las 6 etapas (Preconvocatoria → Fallo) por licitación,
+         segunda fila del .pr-item. Compacta para imprimirse limpio. */
+      #print-report .pr-item {
+        grid-template-rows: auto auto;
+      }
+      #print-report .pr-item-color { grid-row: 1 / -1; }
+      #print-report .pr-item-main   { grid-row: 1; grid-column: 2; }
+      #print-report .pr-item-status { grid-row: 1; grid-column: 3; }
+      #print-report .pr-item-stages {
+        grid-row: 2;
+        grid-column: 2 / -1;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        padding: 5px 9px 7px;
+        border-top: 1px dashed #d8d8d8;
+        background: #fff;
+      }
+      #print-report .pr-stage-item {
+        border: 1px dashed #d0d0d0;
+        border-radius: 3px;
+        padding: 3px 4px;
+        text-align: center;
+        background: #fafafa;
+        min-height: 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1px;
+      }
+      #print-report .pr-stage-item.has-value {
+        background: #fff;
+        border: 1px solid color-mix(in srgb, var(--row-color, #c9922a) 55%, transparent);
+      }
+      #print-report .pr-stage-item.is-today {
+        background: #fff7c2 !important;
+        border: 1.5px solid #c8a300 !important;
+      }
+      #print-report .pr-stage-label {
+        font-size: 6pt;
+        font-weight: 800;
+        letter-spacing: .7px;
+        text-transform: uppercase;
+        color: #666;
+        line-height: 1.1;
+      }
+      #print-report .pr-stage-item.has-value .pr-stage-label { color: #333; }
+      #print-report .pr-stage-item.is-today .pr-stage-label  { color: #6b5300; }
+      #print-report .pr-stage-value {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 7pt;
+        font-weight: 700;
+        color: #aaa;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #print-report .pr-stage-item.has-value .pr-stage-value { color: #222; }
+      #print-report .pr-stage-item.is-today .pr-stage-value  { color: #5a4400; }
+
+      /* Chip "Hoy es ..." encima del título de la licitación cuando el
+         día actual coincide con uno de los hitos de la licitación. */
+      #print-report .pr-item-today {
+        align-self: flex-start;
+        background: #fde047;
+        color: #5a3d00;
+        font-size: 6.5pt;
+        font-weight: 800;
+        letter-spacing: 1.1px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-bottom: 2px;
+        border: 1px solid #c8a300;
+      }
+
       /* Línea del tiempo (versión imprimible, tipo Gantt horizontal compacto) */
       #print-report .pr-tl-empty {
         text-align: center;
@@ -3988,6 +4065,7 @@
       const today = new Date();
       const fmt2 = n => String(n).padStart(2,'0');
       const emisionStr = `${fmt2(today.getDate())}/${fmt2(today.getMonth()+1)}/${today.getFullYear()} ${fmt2(today.getHours())}:${fmt2(today.getMinutes())}`;
+      const startOfTodayMs = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
 
       // ─── Lista de licitaciones apilada (una fila por licitación) ───
       const itemsHtml = items.length ? items.map(it => {
@@ -3996,14 +4074,50 @@
           ? `<div class="pr-item-fallo-label">Fallo</div>
              <div class="pr-item-fallo-value">${escapeHtml(it.fechaStr)}</div>`
           : `<div class="pr-item-status-empty">${escapeHtml(it.estatusStr) || 'Sin fecha'}</div>`;
+
+        // Mapa de hitos por etapa (con respaldo de Fallo desde fechaStr).
+        const hitosByStage = {};
+        (it.hitos || []).forEach(h => { hitosByStage[h.stage] = h; });
+        if (!hitosByStage['Fallo'] && it.fechaStr) {
+          hitosByStage['Fallo'] = { stage: 'Fallo', rawValue: it.fechaStr };
+        }
+        // ¿Algún hito cae HOY? Recorremos en orden cronológico (STAGES).
+        let todayStage = null;
+        for (const stage of STAGES) {
+          const h = hitosByStage[stage];
+          if (!h) continue;
+          const dm = String(h.rawValue).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (!dm) continue;
+          if (new Date(+dm[3], +dm[2] - 1, +dm[1]).getTime() === startOfTodayMs) {
+            todayStage = stage;
+            break;
+          }
+        }
+        const todayBanner = todayStage
+          ? `<div class="pr-item-today">${escapeHtml(HITO_HOY_LABEL[todayStage] || 'Hoy')}</div>`
+          : '';
+        const stagesHtml = STAGES.map(name => {
+          const value = hitosByStage[name]?.rawValue || '';
+          const hasValue = !!value;
+          const isToday = name === todayStage;
+          return `
+            <div class="pr-stage-item${hasValue ? ' has-value' : ''}${isToday ? ' is-today' : ''}">
+              <div class="pr-stage-label">${escapeHtml(name)}</div>
+              <div class="pr-stage-value">${hasValue ? escapeHtml(value) : '—'}</div>
+            </div>
+          `;
+        }).join('');
+
         return `
-          <div class="pr-item">
-            <div class="pr-item-color" style="--row-color:${it.color}"></div>
+          <div class="pr-item" style="--row-color:${it.color}">
+            <div class="pr-item-color"></div>
             <div class="pr-item-main">
+              ${todayBanner}
               <div class="pr-item-title">${escapeHtml(it.title)}</div>
               <div class="pr-item-id">${escapeHtml(it.id)}</div>
             </div>
             <div class="pr-item-status">${statusHtml}</div>
+            <div class="pr-item-stages">${stagesHtml}</div>
           </div>
         `;
       }).join('') : `<div class="pr-empty-row">Sin procesos registrados</div>`;
