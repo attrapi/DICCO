@@ -986,9 +986,11 @@
       color: #f7d98b;
       box-shadow: 0 1px 6px rgba(247,217,139,.18);
     }
-    /* Calendario colapsado: oculta la rejilla y la navegación de mes */
-    #proc-calendar-section.cal-collapsed .calendar,
-    #proc-calendar-section.cal-collapsed .cal-nav { display: none !important; }
+    /* Calendario colapsado: oculta solo la rejilla. La navegación de
+       mes (prev/next + label) se queda visible junto al título para
+       que el usuario pueda ver y cambiar la fecha sin tener que
+       expandir el calendario primero. */
+    #proc-calendar-section.cal-collapsed .calendar { display: none !important; }
 
     .cal-nav {
       display: inline-flex;
@@ -2681,13 +2683,13 @@
           <div class="modal-list" id="mx-list"></div>
         </section>
 
-        <section class="msection" id="proc-calendar-section">
+        <section class="msection cal-collapsed" id="proc-calendar-section">
           <div class="msection-head">
             <div class="msection-title">Calendario</div>
             <div class="cal-actions">
               <div class="cal-toggle-group" role="tablist" aria-label="Mostrar u ocultar calendario">
-                <button type="button" class="cal-toggle-btn is-active" id="cal-show-btn">Mostrar</button>
-                <button type="button" class="cal-toggle-btn" id="cal-hide-btn">Ocultar</button>
+                <button type="button" class="cal-toggle-btn" id="cal-show-btn">Mostrar</button>
+                <button type="button" class="cal-toggle-btn is-active" id="cal-hide-btn">Ocultar</button>
               </div>
               <div class="cal-nav">
                 <button type="button" id="cal-prev" aria-label="Mes anterior">
