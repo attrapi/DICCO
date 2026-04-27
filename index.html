@@ -1209,6 +1209,35 @@
       font-weight: 600;
     }
 
+    /* Renglón "Estatus" con la pastilla al lado de la palabra. */
+    .cal-day-id-items li.is-estatus {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .cal-day-id-items li.is-estatus .cal-day-id-lbl {
+      margin-bottom: 0;
+    }
+    /* Pastilla del estatus: usa el color asignado a la licitación
+       (--id-color, set en el entry) como fondo. */
+    .cal-day-status-pill {
+      display: inline-block;
+      padding: 2px 9px;
+      background: var(--id-color, #c4895a);
+      color: #1a0610;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: .3px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* Flash amarillo canario (suave) — 1s total */
     @keyframes cal-flash {
       0%   {
@@ -3557,11 +3586,14 @@
             const lines = [
               `<li><span class="cal-day-id-lbl">Objeto</span><span class="cal-day-id-val">${summarizeTitle(it.title)}</span></li>`
             ];
-            if (it.fechaStr) {
-              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">Fallo ${it.fechaStr}</span></li>`);
-            } else if (it.estatusStr) {
-              lines.push(`<li><span class="cal-day-id-lbl">Estatus</span><span class="cal-day-id-val">${it.estatusStr}</span></li>`);
-            }
+            // Pastilla de estatus al lado de la palabra. Si la licitación
+            // no tiene estatus capturado, decimos "Pendiente". El fondo
+            // de la pastilla hereda --id-color del entry.
+            const statusText = (it.estatusStr || '').trim() || 'Pendiente';
+            lines.push(
+              `<li class="is-estatus"><span class="cal-day-id-lbl">Estatus</span>` +
+              `<span class="cal-day-status-pill" title="${escapeHtml(statusText)}">${escapeHtml(statusText)}</span></li>`
+            );
             details.innerHTML = lines.join('');
             entry.appendChild(details);
 
