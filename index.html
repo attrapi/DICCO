@@ -687,9 +687,9 @@
       margin-bottom: 12px;
     }
     .msection-title {
-      font-size: 10px;
+      font-size: 13.5px;
       font-weight: 800;
-      letter-spacing: 1.7px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       background: var(--gold-grad);
       -webkit-background-clip: text;
@@ -991,6 +991,11 @@
        que el usuario pueda ver y cambiar la fecha sin tener que
        expandir el calendario primero. */
     #proc-calendar-section.cal-collapsed .calendar { display: none !important; }
+
+    /* En la sección del calendario, los botones (Mostrar/Ocultar y la
+       navegación de mes) van pegados al título, no en la esquina
+       opuesta del head. Las otras secciones siguen con space-between. */
+    #proc-calendar-section .msection-head { justify-content: flex-start; }
 
     .cal-nav {
       display: inline-flex;
@@ -1360,6 +1365,30 @@
       overflow-y: hidden;
       scroll-behavior: smooth;
       padding: 14px 16px 14px 20px;
+      /* Scrollbar dorada solo para esta área (no afecta al resto). */
+      scrollbar-width: thin;
+      scrollbar-color: #c4895a rgba(255,255,255,.05);
+    }
+    .timeline-scroll::-webkit-scrollbar {
+      height: 9px;
+    }
+    .timeline-scroll::-webkit-scrollbar-track {
+      background: rgba(255,255,255,.05);
+      border-radius: 6px;
+      margin: 0 8px;
+    }
+    .timeline-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #f7d98b 0%, #c4895a 100%);
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,.35);
+      box-shadow: 0 0 4px rgba(247,217,139,.25);
+    }
+    .timeline-scroll::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(90deg, #fde047 0%, #f59e0b 100%);
+      box-shadow: 0 0 8px rgba(254,240,138,.45);
+    }
+    .timeline-scroll::-webkit-scrollbar-thumb:active {
+      background: linear-gradient(90deg, #fef08a 0%, #fbbf24 100%);
     }
     .timeline-months {
       display: flex;
