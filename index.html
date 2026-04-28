@@ -4275,10 +4275,27 @@
       }
       buildPrintReport();
       document.body.classList.add('is-printing');
-      // Doble rAF: asegura que el navegador aplique los estilos de @media print antes del diálogo
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        window.print();
-      }));
+
+      // Esperar a que ATTRAPI.png y piedepágina2026.png terminen de
+      // cargar antes de abrir el diálogo. Si window.print() se dispara
+      // antes, los espacios de las imágenes salen vacíos en el PDF.
+      const imgs = Array.from(printReport.querySelectorAll('img'));
+      const allLoaded = Promise.all(imgs.map(img =>
+        (img.complete && img.naturalHeight > 0)
+          ? Promise.resolve()
+          : new Promise(resolve => {
+              img.addEventListener('load', resolve, { once: true });
+              img.addEventListener('error', resolve, { once: true });
+            })
+      ));
+
+      allLoaded.then(() => {
+        // Doble rAF: asegura que el navegador aplique los estilos de
+        // @media print antes del diálogo de impresión.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          window.print();
+        }));
+      });
     }
 
     // Limpieza cuando termina (o se cancela) el diálogo de impresión
