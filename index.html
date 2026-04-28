@@ -1627,6 +1627,28 @@
     .timeline-node-id.pulse-tl { animation: tl-flash 1s ease-out 1; }
     /* Palpitación sostenida (3s) — se aplica al click del ID en la leyenda */
     .timeline-node-id.pulse-tl-hold { animation: tl-flash 1s ease-out 3; }
+
+    /* Variante para pastillas de hitos intermedios (.timeline-hito):
+       conserva el translate(-50%, -50%) de posicionamiento dentro del
+       transform animado para que no se desalinee al palpitar. */
+    @keyframes tl-flash-hito {
+      0% {
+        background: radial-gradient(circle at 50% 50%, #fff 0%, #fef08a 55%, #fde047 100%);
+        box-shadow:
+          0 0 0 4px rgba(254,240,138,.55),
+          0 0 14px #fef08a,
+          0 0 26px rgba(254,240,138,.65),
+          inset 0 0 4px #fff;
+        border-color: #fff;
+        transform: translate(-50%, -50%) scale(1.4);
+        color: #1a0610;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    .timeline-hito.pulse-tl { animation: tl-flash-hito 1s ease-out 1; }
+    .timeline-hito.pulse-tl-hold { animation: tl-flash-hito 1s ease-out 3; }
     .timeline-empty {
       text-align: center;
       color: rgba(255,255,255,.40);
@@ -3444,6 +3466,24 @@
       el.scrollIntoView({ behavior: 'smooth', block });
     }
 
+    // Devuelve la pastilla de la línea del tiempo asociada a la etapa
+    // ACTUAL de una licitación. Si esa etapa no tiene pastilla (porque
+    // no tiene fecha registrada) cae al óvalo "Fallo", que siempre
+    // existe para las licitaciones del modo "En proceso".
+    function getCurrentTimelinePill(idx) {
+      const item = procState.items[idx];
+      const stage = item?.currentStage;
+      if (stage && stage !== 'Fallo') {
+        const hito = mxTimeline.querySelector(`.timeline-hito[data-idx="${idx}"][data-stage="${stage}"]`);
+        if (hito) return { pill: hito, leftPx: parseFloat(hito.style.left) || 0 };
+      }
+      const node = mxTimeline.querySelector(`.timeline-node[data-idx="${idx}"]`);
+      if (node) {
+        return { pill: node.querySelector('.timeline-node-id'), leftPx: parseFloat(node.style.left) || 0 };
+      }
+      return { pill: null, leftPx: 0 };
+    }
+
     // Al hacer click en una tarjeta: lleva al calendario+timeline y pulsa sus elementos
     function focusDateViews(idx) {
       const item = procState.items[idx];
@@ -3454,24 +3494,22 @@
         return;
       }
 
-      // Buscamos la celda del día y el óvalo "Fallo" del timeline
+      // Buscamos la celda del día y la pastilla de la etapa actual.
       let firstCell = null;
       mxCalendar.querySelectorAll('.cal-day.has-event').forEach(cell => {
         const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
         if (arr.includes(idx) && !firstCell) firstCell = cell;
       });
-      const node   = mxTimeline.querySelector(`.timeline-node[data-idx="${idx}"]`);
-      const nodeId = node ? node.querySelector('.timeline-node-id') : null;
+      const { pill, leftPx } = getCurrentTimelinePill(idx);
 
-      const target = firstCell || node || mxCalendar.closest('.msection');
+      const target = firstCell || pill || mxCalendar.closest('.msection');
       smoothScrollTo(target, 'center');
 
-      // Scroll horizontal del timeline para que el óvalo quede visible
+      // Scroll horizontal del timeline para que la pastilla quede visible
       const scrollArea = mxTimeline.querySelector('.timeline-scroll');
-      if (node && scrollArea) {
-        const nodeLeft = parseFloat(node.style.left) || 0;
+      if (pill && scrollArea) {
         const visW = scrollArea.clientWidth;
-        const desired = Math.max(0, nodeLeft - visW / 2);
+        const desired = Math.max(0, leftPx - visW / 2);
         scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
       }
 
@@ -3480,7 +3518,7 @@
           const arr = (cell.dataset.idxs || '').split(',').filter(Boolean).map(Number);
           if (arr.includes(idx)) pulse(cell, 'pulse-cal');
         });
-        pulse(nodeId, 'pulse-tl');
+        pulse(pill, 'pulse-tl');
       }, 320);
     }
 
@@ -3491,19 +3529,18 @@
       setTimeout(() => pulse(card, 'pulse-card'), 320);
     }
 
-    // Al hacer click desde el calendario: lleva al óvalo "Fallo" en la línea
-    // del tiempo (scroll horizontal al mes y palpitación sostenida).
+    // Al hacer click desde el calendario: lleva a la pastilla de la
+    // etapa actual en la línea del tiempo (scroll horizontal y
+    // palpitación sostenida).
     function focusTimelineFor(idx) {
-      const node   = mxTimeline.querySelector(`.timeline-node[data-idx="${idx}"]`);
-      const nodeId = node ? node.querySelector('.timeline-node-id') : null;
+      const { pill, leftPx } = getCurrentTimelinePill(idx);
       const scrollArea = mxTimeline.querySelector('.timeline-scroll');
-      if (node && scrollArea) {
-        const nodeLeft = parseFloat(node.style.left) || 0;
-        const desired = Math.max(0, nodeLeft - scrollArea.clientWidth / 2);
+      if (pill && scrollArea) {
+        const desired = Math.max(0, leftPx - scrollArea.clientWidth / 2);
         scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
       }
       smoothScrollTo(mxTimeline.closest('.msection') || mxTimeline, 'center');
-      setTimeout(() => pulse(nodeId, 'pulse-tl-hold', 3000), 320);
+      setTimeout(() => pulse(pill, 'pulse-tl-hold', 3000), 320);
     }
 
     // Aplica el estado oculto/visible a puntos, nodos, barras de proyección
@@ -3885,15 +3922,16 @@
           // El click del checkbox ya hizo stopPropagation — aquí solo enfoque.
           if (procState.hiddenIdxs.has(item.idx)) return;
           setActive(item.idx);
-          const node   = mxTimeline.querySelector(`.timeline-node[data-idx="${item.idx}"]`);
-          const nodeId = node ? node.querySelector('.timeline-node-id') : null;
+          // Palpitamos la pastilla de la etapa ACTUAL del procedimiento
+          // (Apert, Junta, Conv… o Fallo si está en esa etapa o si la
+          // actual no tiene pastilla por falta de fecha).
+          const { pill, leftPx } = getCurrentTimelinePill(item.idx);
           const scrollArea = mxTimeline.querySelector('.timeline-scroll');
-          if (node && scrollArea) {
-            const nodeLeft = parseFloat(node.style.left) || 0;
-            const desired = Math.max(0, nodeLeft - scrollArea.clientWidth / 2);
+          if (pill && scrollArea) {
+            const desired = Math.max(0, leftPx - scrollArea.clientWidth / 2);
             scrollArea.scrollTo({ left: desired, behavior: 'smooth' });
           }
-          pulse(nodeId, 'pulse-tl-hold', 3000);
+          pulse(pill, 'pulse-tl-hold', 3000);
         });
         legendList.appendChild(row);
       });
