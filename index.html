@@ -631,6 +631,10 @@
       background: #34d399;
       box-shadow: 0 0 6px rgba(52,211,153,.7);
     }
+    /* En "Formalizado" solo se muestra la lista de licitaciones —
+       el calendario y la línea del tiempo no aplican aquí. */
+    .modal-overlay[data-mode="formalizado"] #proc-calendar-section,
+    .modal-overlay[data-mode="formalizado"] #proc-timeline-section { display: none; }
     .modal-title {
       font-size: clamp(14px, 2vw, 18px);
       font-weight: 900;
@@ -2882,7 +2886,7 @@
           <div class="calendar" id="mx-calendar"></div>
         </section>
 
-        <section class="msection">
+        <section class="msection" id="proc-timeline-section">
           <div class="msection-head">
             <div class="msection-title">Línea del tiempo</div>
           </div>
