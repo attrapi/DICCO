@@ -865,6 +865,35 @@
       white-space: nowrap;
       pointer-events: none;
     }
+
+    /* Etapa "Actual" — el procedimiento se encuentra en este hito ahora,
+       sin que la fecha sea HOY. Se resalta con el color de la licitación
+       (steady, sin parpadeo canario). */
+    .stage-item.is-current {
+      background: color-mix(in srgb, var(--card-color) 22%, rgba(255,255,255,.04)) !important;
+      border: 1px solid color-mix(in srgb, var(--card-color) 80%, transparent) !important;
+      box-shadow: 0 2px 12px color-mix(in srgb, var(--card-color) 24%, transparent);
+    }
+    .stage-item.is-current .stage-label { color: #fff !important; }
+    .stage-item.is-current .stage-value { color: var(--card-color) !important; }
+
+    /* Chip "Actual" en la esquina superior derecha del .stage-item activo */
+    .stage-current-tag {
+      position: absolute;
+      top: -7px;
+      right: -6px;
+      padding: 2px 7px;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: #1a0610;
+      background: var(--card-color);
+      border-radius: 999px;
+      box-shadow: 0 1px 6px color-mix(in srgb, var(--card-color) 55%, transparent);
+      white-space: nowrap;
+      pointer-events: none;
+    }
     .modal-list .proc-card-status-label {
       font-size: 9px;
       font-weight: 800;
@@ -890,6 +919,15 @@
       color: rgba(255,255,255,.9);
       letter-spacing: .25px;
       min-height: 1.1em;
+    }
+    /* Pista del próximo hito — se muestra debajo del estatus cuando la
+       etapa actual no tiene fecha propia registrada. */
+    .modal-list .proc-card-status-hint {
+      font-size: 9px;
+      font-weight: 600;
+      color: rgba(255,255,255,.55);
+      letter-spacing: .2px;
+      margin-top: 2px;
     }
     @media (max-width: 760px) {
       .modal-list .proc-card {
@@ -1639,26 +1677,52 @@
 
     /* Hitos intermedios (Convocatoria, Visita al sitio, Junta de aclaraciones,
        Apertura de proposiciones…) sobre la misma barra de proyección del
-       contrato, con su propia línea punteada al eje y pastilla reducida. */
+       contrato — cada uno se dibuja como pastilla idéntica a "Fallo" pero
+       con la abreviatura de su etapa (Conv, Visita, Junta, Apert…). */
     .timeline-hito {
       --id-color: #fb923c;
       position: absolute;
-      width: 9px;
-      height: 9px;
+      transform: translate(-50%, -50%);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .25px;
+      text-transform: uppercase;
+      color: #2a0a12;
       background: var(--id-color);
-      border: 1.5px solid #1a0610;
-      transform: translate(-50%, -50%) rotate(45deg);
-      z-index: 3;
+      padding: 1.5px 7px;
+      border-radius: 999px;
+      border: 1.25px solid #1a0610;
       box-shadow: 0 1px 2px rgba(0,0,0,.4);
+      white-space: nowrap;
+      z-index: 3;
       pointer-events: auto;
       cursor: help;
-      transition: transform .15s, box-shadow .15s;
+      transition: transform .15s, box-shadow .15s, border-color .15s;
     }
     .timeline-hito:hover {
-      transform: translate(-50%, -50%) rotate(45deg) scale(1.25);
+      transform: translate(-50%, -50%) scale(1.18);
+      border-color: #fff;
       box-shadow: 0 2px 6px rgba(0,0,0,.5);
     }
     .timeline-hito.is-hidden { display: none !important; }
+
+    /* Pastilla "Actual" en el timeline — la etapa donde se encuentra
+       AHORA el procedimiento. Halo en el color de la licitación, borde
+       blanco y un poco más grande para sobresalir entre las demás. */
+    .timeline-node-id.is-current,
+    .timeline-hito.is-current {
+      border-color: #fff !important;
+      box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--id-color) 55%, transparent),
+        0 2px 8px rgba(0,0,0,.45) !important;
+    }
+    .timeline-hito.is-current {
+      transform: translate(-50%, -50%) scale(1.12);
+    }
+    .timeline-hito.is-current:hover {
+      transform: translate(-50%, -50%) scale(1.22);
+    }
 
     .timeline-hito-drop {
       --drop-color: #fb923c;
@@ -3165,6 +3229,47 @@
       'Apertura de proposiciones',
       'Fallo',
     ];
+    // Etiqueta corta de cada etapa (pastillas del timeline y resúmenes)
+    const STAGE_SHORT_LABEL = {
+      'Preconvocatoria': 'Precon',
+      'Convocatoria': 'Conv',
+      'Visita al sitio': 'Visita',
+      'Junta de aclaraciones': 'Junta',
+      'Apertura de proposiciones': 'Apert',
+      'Fallo': 'Fallo',
+    };
+
+    // Determina la etapa "actual" de una licitación a partir de las
+    // fechas conocidas. Reglas, en orden:
+    //   1) Si HOY coincide con la fecha de un hito → ese es el actual.
+    //   2) Si no, se toma la etapa inmediatamente ANTERIOR (en orden
+    //      canónico de STAGES) al primer hito FUTURO — incluso si esa
+    //      etapa no tiene fecha registrada (p.ej. solo se conoce Fallo:
+    //      el actual queda como "Apertura de proposiciones").
+    //   3) Si todo está en el pasado, la última etapa pasada.
+    function computeCurrentStage(hitosByStage, todayMs) {
+      const dateOf = (stage) => {
+        const v = hitosByStage[stage]?.rawValue;
+        if (!v) return null;
+        const dm = String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        return dm ? new Date(+dm[3], +dm[2] - 1, +dm[1]).getTime() : null;
+      };
+      for (const s of STAGES) {
+        if (dateOf(s) === todayMs) return s;
+      }
+      const upcoming = STAGES.find(s => {
+        const t = dateOf(s);
+        return t != null && t > todayMs;
+      });
+      if (upcoming) {
+        const i = STAGES.indexOf(upcoming);
+        return i > 0 ? STAGES[i - 1] : upcoming;
+      }
+      for (let i = STAGES.length - 1; i >= 0; i--) {
+        if (dateOf(STAGES[i]) != null) return STAGES[i];
+      }
+      return null;
+    }
     const DOW   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     // Paleta de identidad por licitación (ciclada por índice)
     const PALETTE = ['#fb923c','#7dd3fc','#6ee7b7','#f9a8d4','#c4b5fd','#fde047','#fca5a5','#f7d98b'];
@@ -3512,18 +3617,55 @@
           card.dataset.todayStage = todayStage;
         }
 
+        // Etapa "actual" — la que aplica HOY según las fechas conocidas.
+        // Se guarda en el item para que renderTimeline también pueda
+        // resaltar la pastilla correspondiente sin recomputarla.
+        const currentStage = computeCurrentStage(hitosByStage, todayMs);
+        item.currentStage = currentStage;
+
         const stagesHtml = STAGES.map(name => {
           const value = hitosByStage[name]?.rawValue || '';
           const hasValue = !!value;
           const isStageToday = name === todayStage;
+          // "Actual" no se duplica con "Hoy": si HOY también es la etapa
+          // actual, prevalece la palpitación canaria.
+          const isStageCurrent = name === currentStage && !isStageToday;
           return `
-            <div class="stage-item${hasValue ? ' has-value' : ''}${isStageToday ? ' is-today' : ''}">
+            <div class="stage-item${hasValue ? ' has-value' : ''}${isStageToday ? ' is-today' : ''}${isStageCurrent ? ' is-current' : ''}">
               ${isStageToday ? '<div class="stage-today-tag">Hoy</div>' : ''}
+              ${isStageCurrent ? '<div class="stage-current-tag">Actual</div>' : ''}
               <div class="stage-label">${name}</div>
               ${hasValue ? `<div class="stage-value">${value}</div>` : ''}
             </div>
           `;
         }).join('');
+
+        // Panel de estatus: muestra la etapa ACTUAL (no siempre "Fallo").
+        // Si la etapa actual no tiene fecha registrada, se incluye una
+        // línea "Próx." con el siguiente hito conocido para conservar
+        // el contexto temporal.
+        let statusLabel = '';
+        let statusValue = '';
+        let statusHint = '';
+        if (currentStage) {
+          statusLabel = currentStage;
+          const ownVal = hitosByStage[currentStage]?.rawValue;
+          if (ownVal) {
+            statusValue = ownVal;
+          } else {
+            const nextUp = STAGES.find(s => {
+              const v = hitosByStage[s]?.rawValue;
+              const dm = v ? String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/) : null;
+              return dm && new Date(+dm[3], +dm[2] - 1, +dm[1]).getTime() > todayMs;
+            });
+            if (nextUp) {
+              statusHint = `Próx. ${STAGE_SHORT_LABEL[nextUp] || nextUp} ${hitosByStage[nextUp].rawValue}`;
+            }
+          }
+        } else if (item.fechaStr) {
+          statusLabel = 'Fallo';
+          statusValue = item.fechaStr;
+        }
 
         card.innerHTML = `
           <div class="proc-card-main">
@@ -3537,8 +3679,9 @@
             </div>
           </div>
           <div class="proc-card-status">
-            ${item.fechaStr ? `<div class="proc-card-status-fallo">Fallo</div>` : ''}
-            <div class="proc-card-status-value">${item.fechaStr || ''}</div>
+            ${statusLabel ? `<div class="proc-card-status-fallo">${statusLabel}</div>` : ''}
+            <div class="proc-card-status-value">${statusValue}</div>
+            ${statusHint ? `<div class="proc-card-status-hint">${statusHint}</div>` : ''}
           </div>
           <div class="proc-card-stages">${stagesHtml}</div>
         `;
@@ -3938,7 +4081,7 @@
         node.style.top = laneCenter + 'px';
         node.style.setProperty('--id-color', item.color);
         node.innerHTML = `
-          <div class="timeline-node-id" title="${item.id} — ${rawValue}">Fallo</div>
+          <div class="timeline-node-id${item.currentStage === 'Fallo' ? ' is-current' : ''}" title="${item.id} — ${rawValue}">Fallo</div>
         `;
         const nodeId = node.querySelector('.timeline-node-id');
         nodeId.addEventListener('mouseenter', () => setActive(item.idx));
@@ -3987,13 +4130,15 @@
         track.appendChild(hDrop);
 
         const hito = document.createElement('div');
-        hito.className = 'timeline-hito' + (hidden ? ' is-hidden' : '');
+        const hitoIsCurrent = item.currentStage === stage;
+        hito.className = 'timeline-hito' + (hidden ? ' is-hidden' : '') + (hitoIsCurrent ? ' is-current' : '');
         hito.dataset.idx = item.idx;
         hito.dataset.stage = stage;
         hito.style.left = leftPx + 'px';
         hito.style.top = laneCenter + 'px';
         hito.style.setProperty('--id-color', item.color);
         hito.title = `${stage} — ${rawValue}`;
+        hito.textContent = STAGE_SHORT[stage] || stage;
         hito.addEventListener('mouseenter', () => setActive(item.idx));
         track.appendChild(hito);
 
@@ -4004,7 +4149,7 @@
         dateMark.style.left = leftPx + 'px';
         dateMark.style.top = (axisY + 8 + dateRow * (DATE_ROW_H + DATE_ROW_GAP)) + 'px';
         dateMark.style.setProperty('--date-color', item.color);
-        dateMark.textContent = `${STAGE_SHORT[stage] || stage} ${dateStr}`;
+        dateMark.textContent = dateStr;
         track.appendChild(dateMark);
       });
 
