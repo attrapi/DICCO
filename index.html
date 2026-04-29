@@ -1421,15 +1421,18 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 10px;
       font-weight: 700;
-      color: rgba(255,255,255,.90);
+      color: color-mix(in srgb, var(--id-color) 80%, #fff 20%);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
       flex: 1;
     }
+    .timeline-legend-id .legend-sep {
+      margin: 0 4px;
+      opacity: .55;
+    }
     .timeline-legend-id .legend-obj {
-      color: color-mix(in srgb, var(--id-color) 70%, rgba(255,255,255,.55));
       letter-spacing: .25px;
     }
 
@@ -3940,7 +3943,7 @@
                   aria-label="Mostrar en línea del tiempo"
                   aria-pressed="${checked}"></button>
           <span class="timeline-legend-dot"></span>
-          <span class="timeline-legend-id">${shortId(item.id)}${objLabel ? `-<span class="legend-obj">${objLabel}</span>` : ''}</span>
+          <span class="timeline-legend-id">${shortId(item.id)}${objLabel ? `<span class="legend-sep">/</span><span class="legend-obj">${objLabel}</span>` : ''}</span>
         `;
         if (!checked) row.classList.add('is-filtered-off');
 
