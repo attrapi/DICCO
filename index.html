@@ -1308,8 +1308,8 @@
     }
     .timeline-legend {
       flex: 0 0 auto;
-      width: 180px;
-      padding: 14px 14px 14px 16px;
+      width: 230px;
+      padding: 14px 10px 14px 12px;
       border-right: 1px solid rgba(255,255,255,.10);
       background: rgba(74,20,34,.38);
       display: flex;
@@ -1417,39 +1417,20 @@
       border: 1px solid rgba(0,0,0,.55);
       flex-shrink: 0;
     }
-    .timeline-legend-text {
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-      gap: 6px;
-      min-width: 0;
-      flex: 1;
-      overflow: hidden;
-      white-space: nowrap;
-    }
     .timeline-legend-id {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 10px;
       font-weight: 700;
       color: rgba(255,255,255,.90);
       white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .timeline-legend-obj {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .35px;
-      text-transform: uppercase;
-      color: color-mix(in srgb, var(--id-color) 65%, rgba(255,255,255,.45));
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
+      flex: 1;
     }
-    .timeline-legend-obj::before {
-      content: '·';
-      margin-right: 6px;
-      color: rgba(255,255,255,.30);
+    .timeline-legend-id .legend-obj {
+      color: color-mix(in srgb, var(--id-color) 70%, rgba(255,255,255,.55));
+      letter-spacing: .25px;
     }
 
     /* Área scrolleable con la línea amarilla y los puntos por fecha */
@@ -1585,7 +1566,7 @@
       border-color: #f7d98b;
       transform: translateY(-50%) scale(1.08);
     }
-    .timeline-nav--prev { left: 188px; }
+    .timeline-nav--prev { left: 238px; }
     .timeline-nav--next { right: 8px; }
     .timeline-nav[disabled] {
       opacity: .3;
@@ -3959,10 +3940,7 @@
                   aria-label="Mostrar en línea del tiempo"
                   aria-pressed="${checked}"></button>
           <span class="timeline-legend-dot"></span>
-          <span class="timeline-legend-text">
-            <span class="timeline-legend-id">${shortId(item.id)}</span>
-            ${objLabel ? `<span class="timeline-legend-obj">${objLabel}</span>` : ''}
-          </span>
+          <span class="timeline-legend-id">${shortId(item.id)}${objLabel ? `-<span class="legend-obj">${objLabel}</span>` : ''}</span>
         `;
         if (!checked) row.classList.add('is-filtered-off');
 
