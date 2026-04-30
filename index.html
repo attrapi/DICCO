@@ -3407,6 +3407,11 @@
     //   • Saltillo – Nuevo Laredo → S-N
     //   • Querétaro – Irapuato     → Q-I
     // (si el tren no se detecta, no se añade sufijo)
+    // + sufijo del segmento si aparece:
+    //   • Segmento 15 "A1"           → SEG15-A1
+    //   • Segmento 15 "B"            → SEG15-B
+    //   • Segmentos 13 y 14          → SEG13-14
+    //   • Segmentos 18, 19 y 20      → SEG18-19-20
     function shortObjectLabel(s) {
       if (!s) return '';
       const t = s.trim();
@@ -3419,7 +3424,16 @@
       if (/Saltillo[\s–\-—]+Nuevo\s+Laredo/i.test(t))      train = 'S-N';
       else if (/Quer[eé]taro[\s–\-—]+Irapuato/i.test(t))   train = 'Q-I';
 
-      return [kind, train].filter(Boolean).join(' ');
+      let segment = '';
+      const mSegs = t.match(/\bSegmentos\b\s+(\d+(?:\s*,\s*\d+)*(?:\s*y\s+\d+)?)/i);
+      const mSeg  = t.match(/\bSegmento\b\s+(\d+)(?:\s*["“”']\s*([A-Za-z0-9]+)\s*["“”'])?/i);
+      if (mSegs) {
+        segment = 'SEG' + mSegs[1].replace(/\s*,\s*/g, '-').replace(/\s*y\s+/gi, '-');
+      } else if (mSeg) {
+        segment = 'SEG' + mSeg[1] + (mSeg[2] ? '-' + mSeg[2].toUpperCase() : '');
+      }
+
+      return [kind, train, segment].filter(Boolean).join(' ');
     }
 
     // Cuenta items en una lista "a, b, c y d" (separadores: coma y última " y ").
