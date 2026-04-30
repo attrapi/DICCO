@@ -1429,7 +1429,7 @@
       flex: 1;
     }
     .timeline-legend-id .legend-sep {
-      margin: 0 4px;
+      margin: 0;
       opacity: .55;
     }
     .timeline-legend-id .legend-obj {
@@ -3399,19 +3399,20 @@
 
     // Etiqueta ultra-corta del objeto, para usar debajo del ID en la
     // línea del tiempo y donde se necesite identificar el contrato sin
-    // todo su título.
+    // todo su título. Las partes se unen con guiones para encadenarse
+    // directamente al ID corto (p.ej. "I-3-2026-CyD-SN-SEG-15-A1").
     //   • "Construcción y Diseño…"          → "CyD"
     //   • "Construcción de…"                 → "C"
     //   • "Supervisión, Control y Seguimiento" → "SE"
     // + sufijo del tren detectado:
-    //   • Saltillo – Nuevo Laredo → S-N
-    //   • Querétaro – Irapuato     → Q-I
+    //   • Saltillo – Nuevo Laredo → SN
+    //   • Querétaro – Irapuato     → QI
     // (si el tren no se detecta, no se añade sufijo)
     // + sufijo del segmento si aparece:
-    //   • Segmento 15 "A1"           → SEG15-A1
-    //   • Segmento 15 "B"            → SEG15-B
-    //   • Segmentos 13 y 14          → SEG13-14
-    //   • Segmentos 18, 19 y 20      → SEG18-19-20
+    //   • Segmento 15 "A1"           → SEG-15-A1
+    //   • Segmento 15 "B"            → SEG-15-B
+    //   • Segmentos 13 y 14          → SEG-13-14
+    //   • Segmentos 18, 19 y 20      → SEG-18-19-20
     function shortObjectLabel(s) {
       if (!s) return '';
       const t = s.trim();
@@ -3421,19 +3422,19 @@
       else if (/Construcci[oó]n\s+de\b/i.test(t))                    kind = 'C';
 
       let train = '';
-      if (/Saltillo[\s–\-—]+Nuevo\s+Laredo/i.test(t))      train = 'S-N';
-      else if (/Quer[eé]taro[\s–\-—]+Irapuato/i.test(t))   train = 'Q-I';
+      if (/Saltillo[\s–\-—]+Nuevo\s+Laredo/i.test(t))      train = 'SN';
+      else if (/Quer[eé]taro[\s–\-—]+Irapuato/i.test(t))   train = 'QI';
 
       let segment = '';
       const mSegs = t.match(/\bSegmentos\b\s+(\d+(?:\s*,\s*\d+)*(?:\s*y\s+\d+)?)/i);
       const mSeg  = t.match(/\bSegmento\b\s+(\d+)(?:\s*["“”']\s*([A-Za-z0-9]+)\s*["“”'])?/i);
       if (mSegs) {
-        segment = 'SEG' + mSegs[1].replace(/\s*,\s*/g, '-').replace(/\s*y\s+/gi, '-');
+        segment = 'SEG-' + mSegs[1].replace(/\s*,\s*/g, '-').replace(/\s*y\s+/gi, '-');
       } else if (mSeg) {
-        segment = 'SEG' + mSeg[1] + (mSeg[2] ? '-' + mSeg[2].toUpperCase() : '');
+        segment = 'SEG-' + mSeg[1] + (mSeg[2] ? '-' + mSeg[2].toUpperCase() : '');
       }
 
-      return [kind, train, segment].filter(Boolean).join(' ');
+      return [kind, train, segment].filter(Boolean).join('-');
     }
 
     // Cuenta items en una lista "a, b, c y d" (separadores: coma y última " y ").
@@ -3957,7 +3958,7 @@
                   aria-label="Mostrar en línea del tiempo"
                   aria-pressed="${checked}"></button>
           <span class="timeline-legend-dot"></span>
-          <span class="timeline-legend-id">${shortId(item.id)}${objLabel ? `<span class="legend-sep">/</span><span class="legend-obj">${objLabel}</span>` : ''}</span>
+          <span class="timeline-legend-id">${shortId(item.id)}${objLabel ? `<span class="legend-sep">-</span><span class="legend-obj">${objLabel}</span>` : ''}</span>
         `;
         if (!checked) row.classList.add('is-filtered-off');
 
