@@ -4619,8 +4619,10 @@
       if (!cell) return out;
       const lines = cell.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
       for (const line of lines) {
-        // 1) "ETAPA DD/MM/YYYY [HH:MM]"  (acepta también "DD\MM\YYYY")
-        const m = line.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ][A-Za-zÁÉÍÓÚÑáéíóúñ\s]+?)\s+(\d{1,2}[\/\\]\d{1,2}[\/\\]\d{4}(?:\s+\d{1,2}:\d{2})?)\s*$/);
+        // 1) "ETAPA DD/MM/YYYY [HH:MM]"  (acepta también "DD\MM\YYYY"
+        //    y un separador opcional ":" / "-" / "—" entre etapa y fecha,
+        //    p.ej. "PUBLICACIÓN: 18/12/2025")
+        const m = line.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ][A-Za-zÁÉÍÓÚÑáéíóúñ\s]+?)\s*[:\-–—]?\s+(\d{1,2}[\/\\]\d{1,2}[\/\\]\d{4}(?:\s+\d{1,2}:\d{2})?)\s*$/);
         if (m) {
           const stage = resolveStage(m[1]);
           if (stage) {
