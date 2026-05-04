@@ -4067,15 +4067,16 @@
       const DATE_MARK_W  = 78;  // ancho estimado de cada pastilla de fecha
       const DATE_HSPACE  = 6;   // gap horizontal mínimo entre pastillas contiguas
 
-      // Abreviaciones para las pastillas de fecha de los hitos (el Fallo
-      // conserva su pastilla "normal" sin prefijo).
-      const STAGE_SHORT = {
-        'Preconvocatoria': 'Precon',
-        'Convocatoria': 'Conv',
-        'Visita al sitio': 'Visita',
-        'Junta de aclaraciones': 'Junta',
-        'Apertura de proposiciones': 'Apert',
-        'Fallo': 'Fallo',
+      // Nombre completo de cada etapa, en mayúsculas, tal cual viene en
+      // la matriz publicada (Drive). Se usa como texto de la pastilla en
+      // el timeline.
+      const STAGE_FULL = {
+        'Preconvocatoria': 'PRECONVOCATORIA',
+        'Convocatoria': 'CONVOCATORIA',
+        'Visita al sitio': 'VISITA AL SITIO',
+        'Junta de aclaraciones': 'JUNTA DE ACLARACIONES',
+        'Apertura de proposiciones': 'APERTURA DE PROPOSICIONES',
+        'Fallo': 'FALLO',
       };
 
       // 1) Pre-calcular posiciones X de CADA marcador (Fallo + hitos con
@@ -4209,7 +4210,7 @@
         node.style.top = (laneCenter + (yOffsetByMarker.get(pos) || 0)) + 'px';
         node.style.setProperty('--id-color', item.color);
         node.innerHTML = `
-          <div class="timeline-node-id${item.currentStage === 'Fallo' ? ' is-current' : ''}" title="${item.id} — ${rawValue}">Fallo</div>
+          <div class="timeline-node-id${item.currentStage === 'Fallo' ? ' is-current' : ''}" title="${item.id} — ${rawValue}">FALLO</div>
         `;
         const nodeId = node.querySelector('.timeline-node-id');
         nodeId.addEventListener('mouseenter', () => setActive(item.idx));
@@ -4266,7 +4267,7 @@
         hito.style.top = (laneCenter + (yOffsetByMarker.get(pos) || 0)) + 'px';
         hito.style.setProperty('--id-color', item.color);
         hito.title = `${stage} — ${rawValue}`;
-        hito.textContent = STAGE_SHORT[stage] || stage;
+        hito.textContent = STAGE_FULL[stage] || stage.toUpperCase();
         hito.addEventListener('mouseenter', () => setActive(item.idx));
         track.appendChild(hito);
 
@@ -4505,7 +4506,7 @@
             return `
               <div class="pr-tl-step${has ? '' : ' is-empty'}">
                 <div class="pr-tl-step-dot" style="--row-color:${it.color}"></div>
-                <div class="pr-tl-step-stage">${escapeHtml(STAGE_SHORT_LABEL[stage] || stage)}</div>
+                <div class="pr-tl-step-stage">${escapeHtml(stage.toUpperCase())}</div>
                 <div class="pr-tl-step-date">${has ? escapeHtml(value) : '—'}</div>
               </div>
             `;
