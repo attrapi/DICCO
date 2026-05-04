@@ -4129,6 +4129,25 @@
         rowRightEdge[chosen] = rightEdge;
         rowByMarker.set(pos, chosen);
       });
+
+      // Colisión en MISMO carril + MISMA X (p.ej. Visita y Junta el mismo
+      // día): las pastillas se dibujan exactamente encima y solo se ve
+      // una. Las repartimos verticalmente alrededor del centro del carril.
+      const yOffsetByMarker = new Map();
+      const groupsByLaneX = new Map();
+      allMarkers.forEach(m => {
+        const key = `${m.i}|${Math.round(m.leftPx)}`;
+        if (!groupsByLaneX.has(key)) groupsByLaneX.set(key, []);
+        groupsByLaneX.get(key).push(m);
+      });
+      const STAGE_ORDER = ['Preconvocatoria','Convocatoria','Visita al sitio','Junta de aclaraciones','Apertura de proposiciones','Fallo'];
+      groupsByLaneX.forEach(group => {
+        if (group.length <= 1) return;
+        group.sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
+        const STEP  = 11; // px entre pastillas apiladas
+        const start = -((group.length - 1) * STEP) / 2;
+        group.forEach((m, k) => yOffsetByMarker.set(m, start + k * STEP));
+      });
       const totalDateRows = Math.max(1, rowRightEdge.length);
 
       const lanesAreaH = TRACK_VPAD * 2
@@ -4186,7 +4205,7 @@
         node.className = 'timeline-node' + (hidden ? ' is-hidden' : '');
         node.dataset.idx = item.idx;
         node.style.left = leftPx + 'px';
-        node.style.top = laneCenter + 'px';
+        node.style.top = (laneCenter + (yOffsetByMarker.get(pos) || 0)) + 'px';
         node.style.setProperty('--id-color', item.color);
         node.innerHTML = `
           <div class="timeline-node-id${item.currentStage === 'Fallo' ? ' is-current' : ''}" title="${item.id} — ${rawValue}">Fallo</div>
@@ -4243,7 +4262,7 @@
         hito.dataset.idx = item.idx;
         hito.dataset.stage = stage;
         hito.style.left = leftPx + 'px';
-        hito.style.top = laneCenter + 'px';
+        hito.style.top = (laneCenter + (yOffsetByMarker.get(pos) || 0)) + 'px';
         hito.style.setProperty('--id-color', item.color);
         hito.title = `${stage} — ${rawValue}`;
         hito.textContent = STAGE_SHORT[stage] || stage;
