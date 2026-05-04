@@ -4143,10 +4143,11 @@
       const STAGE_ORDER = ['Preconvocatoria','Convocatoria','Visita al sitio','Junta de aclaraciones','Apertura de proposiciones','Fallo'];
       groupsByLaneX.forEach(group => {
         if (group.length <= 1) return;
+        // La primera (orden cronológico de etapas) se queda en el carril
+        // y las siguientes se apilan DEBAJO con paso fijo.
         group.sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
-        const STEP  = 11; // px entre pastillas apiladas
-        const start = -((group.length - 1) * STEP) / 2;
-        group.forEach((m, k) => yOffsetByMarker.set(m, start + k * STEP));
+        const STEP = 14;
+        group.forEach((m, k) => yOffsetByMarker.set(m, k * STEP));
       });
       const totalDateRows = Math.max(1, rowRightEdge.length);
 
