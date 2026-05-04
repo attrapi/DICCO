@@ -4440,18 +4440,22 @@
 
       // ─── Lista de licitaciones apilada (una fila por licitación) ───
       const itemsHtml = items.length ? items.map(it => {
-        const hasFallo = !!it.fechaStr;
-        const statusHtml = hasFallo
-          ? `<div class="pr-item-fallo-label">Fallo</div>
-             <div class="pr-item-fallo-value">${escapeHtml(it.fechaStr)}</div>`
-          : `<div class="pr-item-status-empty">${escapeHtml(it.estatusStr) || 'Sin fecha'}</div>`;
-
         // Mapa de hitos por etapa (con respaldo de Fallo desde fechaStr).
         const hitosByStage = {};
         (it.hitos || []).forEach(h => { hitosByStage[h.stage] = h; });
         if (!hitosByStage['Fallo'] && it.fechaStr) {
           hitosByStage['Fallo'] = { stage: 'Fallo', rawValue: it.fechaStr };
         }
+
+        // Etapa ACTUAL (el próximo hito, o el último pasado si todo
+        // está en el pasado). NO se asume "Fallo" solo porque exista
+        // fechaStr — se calcula contra HOY igual que en el modal.
+        const currentStage = computeCurrentStage(hitosByStage, startOfTodayMs);
+        const currentVal   = currentStage ? hitosByStage[currentStage]?.rawValue : null;
+        const statusHtml = currentStage
+          ? `<div class="pr-item-fallo-label">${escapeHtml(currentStage.toUpperCase())}</div>
+             <div class="pr-item-fallo-value">${currentVal ? escapeHtml(currentVal) : '—'}</div>`
+          : `<div class="pr-item-status-empty">${escapeHtml(it.estatusStr) || 'Sin fecha'}</div>`;
         // ¿Algún hito cae HOY? Recorremos en orden cronológico (STAGES).
         let todayStage = null;
         for (const stage of STAGES) {
