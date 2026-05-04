@@ -2151,20 +2151,29 @@
       #print-report .pr-tl-step.is-empty .pr-tl-step-date {
         color: #aaa;
       }
-      /* Pie de página: bloque inline al final del reporte. Antes era
-         position:fixed con bottom:-28mm para repetirse en cada hoja,
-         pero varios navegadores lo recortaban al imprimir. Inline es
-         menos elegante (solo aparece en la última hoja) pero garantiza
-         que la imagen sea visible. */
+      /* Tabla envolvente: el <tfoot> con display:table-footer-group hace
+         que Chrome/Edge/Firefox repitan el pie de página al final de
+         CADA hoja impresa (comportamiento tipo "footer de Word"). */
+      #print-report .pr-doc {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      #print-report .pr-doc > tbody > tr > td,
+      #print-report .pr-doc > tfoot > tr > td {
+        padding: 0;
+        vertical-align: top;
+      }
+      #print-report .pr-doc > tfoot {
+        display: table-footer-group;
+      }
       #print-report .pr-footer {
-        margin-top: 14mm;
-        padding-top: 6mm;
+        padding: 6mm 0 2mm;
         font-size: 7pt;
         color: #777;
         text-align: center;
         border-top: 1px solid #e5e5e5;
-        page-break-inside: avoid;
         break-inside: avoid;
+        page-break-inside: avoid;
       }
       #print-report .pr-footer-logo {
         display: block;
@@ -4523,31 +4532,43 @@
       //   - secciones de contenido
       //   - .pr-footer con la imagen y texto institucional, position:fixed
       //     vía CSS para que aparezca al fondo de CADA hoja al imprimir.
+      // El reporte se envuelve en un <table> con <tfoot> para que el
+      // navegador repita automáticamente el pie en cada hoja impresa
+      // (truco estándar tipo "footer de Word" en Chrome/Edge/Firefox).
       printReport.innerHTML = `
-        <div class="pr-header">
-          <div class="pr-header-text">
-            <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
-            <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
-            <div class="pr-sub">${escapeHtml(sub)}</div>
-            <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
-          </div>
-          <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
-        </div>
+        <table class="pr-doc">
+          <tfoot>
+            <tr><td>
+              <div class="pr-footer">
+                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+                <div class="pr-footer-text">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
+              </div>
+            </td></tr>
+          </tfoot>
+          <tbody>
+            <tr><td>
+              <div class="pr-header">
+                <div class="pr-header-text">
+                  <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
+                  <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
+                  <div class="pr-sub">${escapeHtml(sub)}</div>
+                  <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
+                </div>
+                <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
+              </div>
 
-        <div class="pr-section">
-          <div class="pr-section-title">Procedimientos de contratación</div>
-          ${listHtml}
-        </div>
+              <div class="pr-section">
+                <div class="pr-section-title">Procedimientos de contratación</div>
+                ${listHtml}
+              </div>
 
-        <div class="pr-section">
-          <div class="pr-section-title">Línea del tiempo</div>
-          ${timelineHtml}
-        </div>
-
-        <div class="pr-footer">
-          <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
-          <div class="pr-footer-text">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
-        </div>
+              <div class="pr-section">
+                <div class="pr-section-title">Línea del tiempo</div>
+                ${timelineHtml}
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
       `;
     }
 
