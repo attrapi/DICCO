@@ -2074,8 +2074,8 @@
       }
       #print-report .pr-tl {
         display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 3px 10px;
+        grid-template-columns: auto 1fr;
+        gap: 8px 12px;
         align-items: center;
         font-size: 8.5pt;
       }
@@ -2095,44 +2095,61 @@
         background: var(--row-color, #c9922a);
         border: 1px solid rgba(0,0,0,.3);
       }
-      #print-report .pr-tl-bar-wrap {
+      #print-report .pr-tl-steps {
         position: relative;
-        height: 8px;
-        background: #f0e5cf;
-        border-radius: 3px;
-        overflow: hidden;
+        display: flex;
+        align-items: flex-start;
+        padding-top: 4px;
       }
-      #print-report .pr-tl-bar-wrap::before {
+      #print-report .pr-tl-steps::before {
         content: '';
         position: absolute;
-        inset: 3px 0;
-        background: repeating-linear-gradient(90deg, #ddd 0 1px, transparent 1px 40px);
+        left: calc(50% / var(--n, 1));
+        right: calc(50% / var(--n, 1));
+        top: 9px;
+        height: 2px;
+        background: #f0e5cf;
+        border-radius: 1px;
+        z-index: 0;
       }
-      #print-report .pr-tl-dot {
-        position: absolute;
-        top: 50%;
+      #print-report .pr-tl-step {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 2px;
+        position: relative;
+        z-index: 1;
+      }
+      #print-report .pr-tl-step-dot {
         width: 10px; height: 10px;
         border-radius: 50%;
         background: var(--row-color, #c9922a);
         border: 1.5px solid #fff;
         box-shadow: 0 0 0 1px rgba(0,0,0,.35);
-        transform: translate(-50%, -50%);
       }
-      #print-report .pr-tl-date {
+      #print-report .pr-tl-step.is-empty .pr-tl-step-dot {
+        background: #fff;
+        box-shadow: 0 0 0 1px #c8c8c8;
+      }
+      #print-report .pr-tl-step-stage {
+        font-size: 6.5pt;
+        color: #666;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+      }
+      #print-report .pr-tl-step-date {
         font-family: ui-monospace, Menlo, Consolas, monospace;
-        font-size: 8pt;
-        color: #333;
+        font-size: 7.5pt;
+        color: #222;
         white-space: nowrap;
       }
-      #print-report .pr-tl-scale {
-        grid-column: 2 / 3;
-        display: flex;
-        justify-content: space-between;
-        font-size: 6.5pt;
-        color: #777;
-        margin-top: 2px;
-        padding-top: 2px;
-        border-top: 1px solid #d8d8d8;
+      #print-report .pr-tl-step.is-empty .pr-tl-step-stage,
+      #print-report .pr-tl-step.is-empty .pr-tl-step-date {
+        color: #aaa;
       }
       /* Pie de página: fijo al fondo de CADA hoja impresa. Modernos
          Chrome/Edge/Firefox repiten elementos position:fixed por hoja.
@@ -4445,41 +4462,41 @@
 
       const listHtml = `<div class="pr-list">${itemsHtml}</div>`;
 
-      // ─── Línea del tiempo (horizontal, proporcional al rango real) ───
+      // ─── Línea del tiempo (etapas equidistantes, sin escala temporal) ───
+      // En el reporte no interesa la separación real entre hitos, solo
+      // listar las etapas conocidas de cada licitación una junto a otra.
       let timelineHtml;
-      if (!dated.length) {
-        timelineHtml = `<div class="pr-tl-empty">Sin fechas de fallo registradas</div>`;
+      const itemsForTl = items.filter(it => {
+        if (it.fechaStr) return true;
+        return (it.hitos || []).some(h => STAGES.includes(h.stage));
+      });
+      if (!itemsForTl.length) {
+        timelineHtml = `<div class="pr-tl-empty">Sin fechas registradas</div>`;
       } else {
-        const firstT = dated[0].fechaDate.getTime();
-        const lastT  = dated[dated.length - 1].fechaDate.getTime();
-        const range  = Math.max(1, lastT - firstT);
-        // Clamp para que los puntos del primero/último no se salgan del bar
-        const pct = t => {
-          if (range <= 1) return 50;
-          const raw = ((t - firstT) / range) * 100;
-          return Math.max(2, Math.min(98, raw));
-        };
-
-        const rowsTl = dated.map(it => {
-          const p = pct(it.fechaDate.getTime());
+        const rowsTl = itemsForTl.map(it => {
+          const hitosByStage = {};
+          (it.hitos || []).forEach(h => { hitosByStage[h.stage] = h; });
+          if (!hitosByStage['Fallo'] && it.fechaStr) {
+            hitosByStage['Fallo'] = { stage: 'Fallo', rawValue: it.fechaStr };
+          }
+          const stepsHtml = STAGES.map(stage => {
+            const value = hitosByStage[stage]?.rawValue || '';
+            const has = !!value;
+            return `
+              <div class="pr-tl-step${has ? '' : ' is-empty'}">
+                <div class="pr-tl-step-dot" style="--row-color:${it.color}"></div>
+                <div class="pr-tl-step-stage">${escapeHtml(STAGE_SHORT_LABEL[stage] || stage)}</div>
+                <div class="pr-tl-step-date">${has ? escapeHtml(value) : '—'}</div>
+              </div>
+            `;
+          }).join('');
           return `
             <div class="pr-tl-id" style="--row-color:${it.color}">${escapeHtml(shortId(it.id))}</div>
-            <div class="pr-tl-bar-wrap">
-              <div class="pr-tl-dot" style="--row-color:${it.color}; left:${p.toFixed(2)}%"></div>
-            </div>
-            <div class="pr-tl-date">${escapeHtml(it.fechaStr)}</div>
+            <div class="pr-tl-steps" style="--n:${STAGES.length}">${stepsHtml}</div>
           `;
         }).join('');
 
-        const startLabel = `${fmt2(dated[0].fechaDate.getDate())}/${fmt2(dated[0].fechaDate.getMonth()+1)}/${dated[0].fechaDate.getFullYear()}`;
-        const endLabel   = `${fmt2(dated[dated.length-1].fechaDate.getDate())}/${fmt2(dated[dated.length-1].fechaDate.getMonth()+1)}/${dated[dated.length-1].fechaDate.getFullYear()}`;
-
-        timelineHtml = `
-          <div class="pr-tl">
-            ${rowsTl}
-            <div class="pr-tl-scale"><span>${startLabel}</span><span>${endLabel}</span></div>
-          </div>
-        `;
+        timelineHtml = `<div class="pr-tl">${rowsTl}</div>`;
       }
 
       // Estructura clásica del reporte (look de letterhead):
