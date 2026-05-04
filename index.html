@@ -4348,6 +4348,10 @@
       procState.items = items;
       procState.active = null;
       procState.hiddenIdxs = new Set(); // arranca con todos los filtros activos
+      // Guardamos la fuente para que generateReport pueda re-extraer
+      // los items con datos frescos justo antes de imprimir.
+      procState.acc = acc;
+      procState.facetClass = facetClass;
 
       // El calendario siempre arranca colapsado al abrir el modal,
       // sin importar si el usuario lo había dejado abierto antes ni si
@@ -4577,7 +4581,21 @@
       `;
     }
 
-    function generateReport() {
+    async function generateReport() {
+      // Refrescamos primero desde la matriz publicada para que el PDF
+      // siempre refleje el estado más reciente (un hito que pasó de
+      // Apertura a Fallo, una nueva licitación añadida, etc.). Si la
+      // red falla seguimos con los datos que ya estaban en memoria.
+      try { await syncFromMatrix(); } catch (e) { /* fallback silencioso */ }
+      // Re-extraer items del DOM ya actualizado por el sync, y re-render
+      // del modal para mantener todo coherente con lo que va al reporte.
+      if (procState.acc && procState.facetClass) {
+        procState.items = extractProceso(procState.acc, procState.facetClass);
+        procState.active = null;
+        renderList();
+        renderCalendar();
+        renderTimeline();
+      }
       if (!procState.items.length) {
         showToast('No hay procesos para reportar');
         return;
