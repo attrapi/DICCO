@@ -2159,9 +2159,13 @@
         border-collapse: collapse;
       }
       #print-report .pr-doc > tbody > tr > td,
+      #print-report .pr-doc > thead > tr > td,
       #print-report .pr-doc > tfoot > tr > td {
         padding: 0;
         vertical-align: top;
+      }
+      #print-report .pr-doc > thead {
+        display: table-header-group;
       }
       #print-report .pr-doc > tfoot {
         display: table-footer-group;
@@ -4532,20 +4536,14 @@
       //   - secciones de contenido
       //   - .pr-footer con la imagen y texto institucional, position:fixed
       //     vía CSS para que aparezca al fondo de CADA hoja al imprimir.
-      // El reporte se envuelve en un <table> con <tfoot> para que el
-      // navegador repita automáticamente el pie en cada hoja impresa
-      // (truco estándar tipo "footer de Word" en Chrome/Edge/Firefox).
+      // El reporte se envuelve en un <table> con <thead> y <tfoot> para
+      // que el navegador repita automáticamente el encabezado (logo
+      // ATTRAPI) y el pie (piedepágina2026) en CADA hoja impresa
+      // (truco estándar tipo "header/footer de Word" — funciona en
+      // Chrome, Edge y Firefox).
       printReport.innerHTML = `
         <table class="pr-doc">
-          <tfoot>
-            <tr><td>
-              <div class="pr-footer">
-                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
-                <div class="pr-footer-text">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
-              </div>
-            </td></tr>
-          </tfoot>
-          <tbody>
+          <thead>
             <tr><td>
               <div class="pr-header">
                 <div class="pr-header-text">
@@ -4556,7 +4554,18 @@
                 </div>
                 <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
               </div>
-
+            </td></tr>
+          </thead>
+          <tfoot>
+            <tr><td>
+              <div class="pr-footer">
+                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+                <div class="pr-footer-text">Dirección de Ingeniería de Concursos y Costos de Construcción</div>
+              </div>
+            </td></tr>
+          </tfoot>
+          <tbody>
+            <tr><td>
               <div class="pr-section">
                 <div class="pr-section-title">Procedimientos de contratación</div>
                 ${listHtml}
