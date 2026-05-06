@@ -2224,11 +2224,11 @@
       <!-- ── Subdirectores 2×2 ── -->
       <section class="grid-sub" aria-label="Subdirectores">
 
-        <!-- Subdirector A -->
+        <!-- Subdirección de Concursos y Costos A -->
         <div class="acc" id="acc-a">
           <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-a">
             <div class="acc-info">
-              <div class="acc-role">Subdirector A</div>
+              <div class="acc-role">Subdirección de Concursos y Costos A</div>
               <div class="acc-name">José Roberto García</div>
             </div>
             <span class="acc-chevron" aria-hidden="true">
@@ -2665,11 +2665,11 @@
           </div>
         </div>
 
-        <!-- Subdirector B -->
+        <!-- Subdirección de Concursos y Costos B -->
         <div class="acc" id="acc-b">
           <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-b">
             <div class="acc-info">
-              <div class="acc-role">Subdirector B</div>
+              <div class="acc-role">Subdirección de Concursos y Costos B</div>
               <div class="acc-name">Ernesto A. Hernández Hernández</div>
             </div>
             <span class="acc-chevron" aria-hidden="true">
@@ -2886,11 +2886,11 @@
           </div>
         </div>
 
-        <!-- Subdirector C -->
+        <!-- Subdirección de Concursos y Costos C -->
         <div class="acc" id="acc-c">
           <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-c">
             <div class="acc-info">
-              <div class="acc-role">Subdirector C</div>
+              <div class="acc-role">Subdirección de Concursos y Costos C</div>
               <div class="acc-name">Raúl Sánchez Fuentes</div>
             </div>
             <span class="acc-chevron" aria-hidden="true">
@@ -2920,11 +2920,11 @@
           </div>
         </div>
 
-        <!-- Subdirector D -->
+        <!-- Subdirección de Concursos y Costos D -->
         <div class="acc" id="acc-d">
           <button class="acc-trigger" type="button" aria-expanded="false" aria-controls="panel-d">
             <div class="acc-info">
-              <div class="acc-role">Subdirector D</div>
+              <div class="acc-role">Subdirección de Concursos y Costos D</div>
               <div class="acc-name">Mario Alberto Piñón Landero</div>
             </div>
             <span class="acc-chevron" aria-hidden="true">
@@ -3038,19 +3038,28 @@
 
   <script>
     /* ══════════════════════════════════════════════════════════
-       Auto-migración: si el día del Fallo ya pasó (estricto:
-       Fallo anterior al inicio del día actual), la tarjeta se
-       mueve de "En proceso" → "Formalizado" de la misma
-       subdirección. El día del Fallo la tarjeta SIGUE visible en
-       "En proceso"; migra al día siguiente. Corre ANTES de
-       cablear el árbol de facetas para que los contadores
-       reflejen el estado final.
+       Auto-migración "En proceso" → "Formalizado" de la misma
+       subdirección. Una tarjeta se considera ya formalizada (o
+       en vías de formalización) cuando se cumple cualquiera de:
+         a) La fecha del acto del Fallo es estrictamente anterior
+            al inicio del día actual (el mismo día del Fallo la
+            tarjeta SIGUE visible en "En proceso" y migra al día
+            siguiente).
+         b) No hay fecha de Fallo registrada pero el campo
+            "Estatus" menciona "contrato" — en el ciclo de
+            licitación, hablar del contrato solo ocurre DESPUÉS
+            del Fallo (formalización, anexos, firma, etc.), así
+            que sirve como señal confiable de etapa post-Fallo.
+       Corre ANTES de cablear el árbol de facetas para que los
+       contadores reflejen el estado final, y se vuelve a llamar
+       después de cada sync con la matriz para capturar tarjetas
+       que cambien de estatus en caliente.
        ══════════════════════════════════════════════════════════ */
-    (function migrateExpired() {
+    function migrateExpired() {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
       const startOfTodayMs = startOfToday.getTime();
-      const parseFallo = (str) => {
+      const parseFalloDate = (str) => {
         if (!str) return null;
         const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
         if (!m) return null;
@@ -3067,14 +3076,47 @@
           const m = txt.match(/^(.+?):\s*(.+)$/);
           if (!m) continue;
           if (!/fallo/i.test(m[1])) continue;
-          const f = parseFallo(m[2].trim());
+          const f = parseFalloDate(m[2].trim());
           if (f) return f;
         }
         return null;
       };
 
+      // Devuelve el texto del campo "Estatus" si existe en la tarjeta.
+      const findStatus = (card) => {
+        const rows = card.querySelectorAll('.proc-meta-row');
+        for (const row of rows) {
+          const txt = row.querySelector('.proc-meta')?.textContent.trim() || '';
+          const m = txt.match(/^(.+?):\s*(.+)$/);
+          if (!m) continue;
+          if (!/^estatus$/i.test(m[1].trim())) continue;
+          return m[2].trim();
+        }
+        return '';
+      };
+
+      // En el ciclo de licitación pública, la palabra "contrato" en el
+      // estatus solo aparece DESPUÉS del Fallo (formalización del
+      // contrato, espera de anexos, firma…). Las etapas previas hablan
+      // de convocatoria, junta de aclaraciones, apertura de
+      // proposiciones — nunca de contrato. Por eso este patrón es una
+      // señal segura de que el Fallo ya ocurrió aunque no haya fecha.
+      const POST_FALLO_STATUS = /contrato/i;
+
+      // Usamos selector descendiente (no `:scope > .facet`) porque después
+      // de cablear el árbol horizontal los facets quedan dentro de un
+      // .facet-tree-cols, dejando de ser hijos directos del .acc-body.
+      // Así esta función funciona tanto en la primera corrida (HTML
+      // estático) como en re-corridas posteriores (después de un sync).
+      const refreshCount = (badge, items) => {
+        if (!badge) return;
+        const counter = badge.querySelector('.facet-count');
+        if (!counter) return; // aún no se cableó el árbol
+        counter.textContent = items.querySelectorAll('.proc-card').length;
+      };
+
       document.querySelectorAll('.acc-body').forEach(body => {
-        const facets = Array.from(body.querySelectorAll(':scope > .facet'));
+        const facets = Array.from(body.querySelectorAll('.facet'));
         const procFacet = facets.find(f => f.querySelector('.facet-badge.proceso'));
         const formFacet = facets.find(f => f.querySelector('.facet-badge.formalizado'));
         if (!procFacet || !formFacet) return;
@@ -3083,30 +3125,48 @@
         const formItems = formFacet.querySelector('.facet-items');
         if (!procItems || !formItems) return;
 
+        let migrated = 0;
         Array.from(procItems.querySelectorAll('.proc-card')).forEach(card => {
           const fecha = findFalloDate(card);
-          if (!fecha) return;
-          // Migra solo si la fecha de Fallo es estrictamente anterior
-          // al inicio del día actual: el mismo día del Fallo se queda.
-          if (fecha.getTime() >= startOfTodayMs) return;
+          let shouldMigrate = false;
+          if (fecha) {
+            if (fecha.getTime() < startOfTodayMs) shouldMigrate = true;
+          } else {
+            const status = findStatus(card);
+            if (status && POST_FALLO_STATUS.test(status)) shouldMigrate = true;
+          }
+          if (!shouldMigrate) return;
 
           // Conservamos todas las meta rows: Formalizado mantiene la
           // misma vista que En proceso (Apertura, Fallo, Estatus…).
-
-          // Si había placeholder "Sin procesos registrados", fuera
           formItems.querySelector('.proc-empty')?.remove();
           formItems.appendChild(card);
+          migrated++;
         });
 
-        // Si "En proceso" quedó vacío, restaurar el placeholder
+        // Si "En proceso" quedó vacío, restaurar el placeholder; si volvió
+        // a haber tarjetas (por re-ejecución), limpiar cualquier residuo.
         if (!procItems.querySelector('.proc-card')) {
-          const empty = document.createElement('div');
-          empty.className = 'proc-empty';
-          empty.textContent = 'Sin procesos registrados';
-          procItems.appendChild(empty);
+          if (!procItems.querySelector('.proc-empty')) {
+            const empty = document.createElement('div');
+            empty.className = 'proc-empty';
+            empty.textContent = 'Sin procesos registrados';
+            procItems.appendChild(empty);
+          }
+        } else {
+          procItems.querySelector('.proc-empty')?.remove();
+        }
+
+        // Actualizar contadores en los badges (los que ya cablearon su
+        // .facet-count). En la primera corrida no existe aún, y se
+        // calcula correctamente al cablear el árbol.
+        if (migrated > 0) {
+          refreshCount(procFacet.querySelector('.facet-badge.proceso'), procItems);
+          refreshCount(formFacet.querySelector('.facet-badge.formalizado'), formItems);
         }
       });
-    })();
+    }
+    migrateExpired();
 
     /* ══════════════════════════════════════════════════════════
        Marca cualquier .proc-meta-row cuya fecha sea HOY (sin importar
@@ -4851,6 +4911,10 @@
         // Re-evaluar el highlight "Hoy es el Fallo" porque el sync puede
         // haber agregado/actualizado la fila de Fallo de alguna tarjeta.
         markFalloToday();
+        // Re-evaluar la migración a "Formalizado": el sync pudo haber
+        // actualizado un estatus a uno post-Fallo (ej. "falta contrato
+        // formalizado") o agregado una fecha de Fallo ya vencida.
+        migrateExpired();
       } catch (err) {
         console.warn('[matriz] sync falló — la UI conserva los datos hardcoded:', err);
       }
