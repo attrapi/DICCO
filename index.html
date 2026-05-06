@@ -1806,12 +1806,12 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      /* @page margin: dejamos margen razonable; el encabezado y el pie
-         van dentro de un <table class="pr-doc"> con <thead> y <tfoot>
-         y display:table-header-group/table-footer-group, lo que los
-         hace repetirse automáticamente en CADA hoja impresa
-         (comportamiento tipo Word — Chrome/Edge/Firefox). */
-      @page { size: A4; margin: 14mm; }
+      /* @page margin: 20mm por los cuatro lados — espacio cómodo entre
+         el contenido y el borde del papel. El encabezado y el pie van
+         dentro de un <table class="pr-doc"> con <thead> y <tfoot> y
+         display:table-header-group/table-footer-group, lo que los hace
+         repetirse en CADA hoja impresa (tipo Word). */
+      @page { size: A4; margin: 20mm; }
 
       html, body {
         background: #fff !important;
@@ -1844,7 +1844,12 @@
       #print-report .pr-doc > thead > tr > td,
       #print-report .pr-doc > tbody > tr > td,
       #print-report .pr-doc > tfoot > tr > td {
-        padding: 0;
+        /* Padding horizontal aplicado dentro de la celda: queda
+           consistente en TODAS las hojas (a diferencia del padding
+           vertical que solo aparece al inicio/fin del td) y sirve de
+           red de seguridad si el usuario elige "Márgenes: Ninguno"
+           en el diálogo de impresión y se anula el @page margin. */
+        padding: 0 4mm;
         vertical-align: top;
       }
       #print-report .pr-header {
