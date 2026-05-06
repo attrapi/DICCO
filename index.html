@@ -1806,12 +1806,12 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      /* @page margin: 20mm por los cuatro lados — espacio cómodo entre
-         el contenido y el borde del papel. El encabezado y el pie van
-         dentro de un <table class="pr-doc"> con <thead> y <tfoot> y
-         display:table-header-group/table-footer-group, lo que los hace
-         repetirse en CADA hoja impresa (tipo Word). */
-      @page { size: A4; margin: 20mm; }
+      /* @page margin: 20mm arriba/lados, 45mm abajo — el margen inferior
+         extra reserva el espacio donde se pinta el pie con
+         `position: fixed`. El <thead> repite el encabezado en cada hoja
+         vía table-header-group; el <tfoot> queda como espaciador
+         invisible para que el contenido no entre al área del pie. */
+      @page { size: A4; margin: 20mm 20mm 45mm 20mm; }
 
       html, body {
         background: #fff !important;
@@ -1861,16 +1861,30 @@
         padding-bottom: 4px;
         margin-bottom: 8px;
       }
-      #print-report .pr-footer {
-        padding-top: 6mm;
+      /* tfoot espaciador: reserva alto al final del área de contenido
+         de cada hoja, así el cuerpo no se mete sobre el pie físico. */
+      #print-report .pr-footer-spacer {
+        height: 32mm;
+      }
+      /* Pie físico: position:fixed para pegarse al borde inferior del
+         papel y repetirse en TODAS las hojas (Chrome/Edge/Firefox). El
+         espaciador del tfoot garantiza que aunque el navegador ancle
+         el fixed al área de contenido del @page (no al papel), el
+         contenido no se traslape con la imagen del pie. */
+      #print-report .pr-page-footer {
+        position: fixed;
+        bottom: 8mm;
+        left: 24mm;
+        right: 24mm;
+        height: 28mm;
         text-align: center;
-        break-inside: avoid;
-        page-break-inside: avoid;
+        background: #fff;
+        z-index: 10;
       }
       #print-report .pr-footer-logo {
         display: block;
         max-width: 100%;
-        max-height: 22mm;
+        max-height: 28mm;
         height: auto;
         width: auto;
         margin: 0 auto;
@@ -1881,10 +1895,12 @@
         min-width: 0;
         overflow: hidden;
       }
+      /* Logo ATTRAPI duplicado de tamaño respecto a la versión previa
+         (max-height 22mm → 44mm; max-width 50mm → 100mm). */
       #print-report .pr-header-logo {
         flex: 0 0 auto;
-        max-height: 22mm;
-        max-width: 50mm;
+        max-height: 44mm;
+        max-width: 100mm;
         height: auto;
         width: auto;
         object-fit: contain;
@@ -4435,9 +4451,12 @@
       modal.dataset.mode = mode;
       modalTitle.textContent = name || 'Procesos';
       // Versión visual: el conteo va en un segundo renglón debajo del rol.
-      // Versión plana (con " · ") se conserva en data-full para el reporte.
+      // El reporte usa data-role y data-count para imprimir cada parte
+      // en su propio renglón (mismo layout que el modal en pantalla).
       const flatSub = role ? `${role} · ${items.length} ${subtitleLabel}` : '';
-      modalSubtitle.dataset.full = flatSub;
+      modalSubtitle.dataset.full  = flatSub;
+      modalSubtitle.dataset.role  = role || '';
+      modalSubtitle.dataset.count = role ? `${items.length} ${subtitleLabel}` : '';
       modalSubtitle.innerHTML = role
         ? `${escapeHtml(role)}<br>${items.length} ${escapeHtml(subtitleLabel)}`
         : '';
@@ -4526,8 +4545,10 @@
     }
 
     function buildPrintReport() {
-      const role  = modalTitle.textContent.trim();
-      const sub   = (modalSubtitle.dataset.full || modalSubtitle.textContent).trim();
+      const role     = modalTitle.textContent.trim();
+      const sub      = (modalSubtitle.dataset.full || modalSubtitle.textContent).trim();
+      const subRole  = modalSubtitle.dataset.role  || '';
+      const subCount = modalSubtitle.dataset.count || '';
       const items = procState.items;
       const dated = items.filter(i => i.fechaDate).sort((a,b) => a.fechaDate - b.fechaDate);
 
@@ -4609,6 +4630,19 @@
       // ruta es más fiable que `position: fixed`, que en print se
       // posiciona dentro del área de contenido del @page (no contra el
       // borde físico) y termina encimando texto sobre el cuerpo.
+      // Estructura del reporte:
+      //   - <thead> repite el encabezado en cada hoja (table-header-group).
+      //   - <tfoot> (table-footer-group) actúa como ESPACIADOR invisible
+      //     que reserva alto al final del cuerpo en cada hoja para que
+      //     el contenido NO se meta donde irá el pie físico.
+      //   - .pr-page-footer (sibling de la tabla) lleva la imagen real
+      //     del pie y va con `position: fixed; bottom: …` para pegarse
+      //     al borde inferior del papel en TODAS las hojas (tipo Word).
+      const headerSubHtml = subRole
+        ? `<div class="pr-sub">${escapeHtml(subRole)}</div>
+           ${subCount ? `<div class="pr-sub pr-sub-count">${escapeHtml(subCount)}</div>` : ''}`
+        : `<div class="pr-sub">${escapeHtml(sub)}</div>`;
+
       printReport.innerHTML = `
         <table class="pr-doc">
           <thead>
@@ -4617,7 +4651,7 @@
                 <div class="pr-header-text">
                   <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
                   <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
-                  <div class="pr-sub">${escapeHtml(sub)}</div>
+                  ${headerSubHtml}
                   <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
                 </div>
                 <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
@@ -4626,9 +4660,7 @@
           </thead>
           <tfoot>
             <tr><td>
-              <div class="pr-footer">
-                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
-              </div>
+              <div class="pr-footer-spacer" aria-hidden="true"></div>
             </td></tr>
           </tfoot>
           <tbody>
@@ -4645,6 +4677,10 @@
             </td></tr>
           </tbody>
         </table>
+
+        <div class="pr-page-footer">
+          <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+        </div>
       `;
     }
 
