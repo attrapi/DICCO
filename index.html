@@ -1806,15 +1806,13 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      /* @page margin: lo mantenemos generoso por si el diálogo respeta
-         la configuración "Predeterminado". Además #print-report tiene
-         padding interno para garantizar márgenes aunque el navegador
-         ignore @page (p.ej. si el usuario elige "Ninguno" en el diálogo). */
-      /* @page margin: lo mantenemos generoso por si el diálogo respeta
-         la configuración "Predeterminado". Margen extra al fondo
-         (30mm) para que ahí se ancle el .pr-footer position:fixed
-         que aparece en CADA hoja. */
-      @page { size: A4; margin: 14mm 14mm 30mm 14mm; }
+      /* @page margin: el margen superior reserva espacio para el
+         encabezado ATTRAPI y el inferior para el pie con la imagen
+         "piedepágina2026", ambos posicionados con `position: fixed`
+         dentro de #print-report (comportamiento tipo Word/Office:
+         encabezado y pie pegados arriba/abajo de TODAS las hojas,
+         no solo donde termina el contenido). */
+      @page { size: A4; margin: 32mm 14mm 34mm 14mm; }
 
       html, body {
         background: #fff !important;
@@ -1832,19 +1830,38 @@
         color: #1a1a1a;
         font-size: 9.5pt;
         line-height: 1.3;
-        /* Padding interno: red de seguridad cuando el navegador
-           ignora @page { margin } (p.ej. "Ninguno" en el diálogo). */
-        padding: 6mm 8mm;
         box-sizing: border-box;
       }
-      #print-report .pr-header {
+      /* Encabezado y pie "running" (position: fixed): los navegadores
+         repintan los elementos position:fixed en CADA hoja impresa,
+         siempre en la misma posición relativa al papel. Los anclamos a
+         top:0 / bottom:0; el @page margin reserva el alto suficiente
+         para que el contenido NO se traslape con ellos. */
+      #print-report .pr-running {
+        position: fixed;
+        left: 14mm;
+        right: 14mm;
+        background: #fff;
+        z-index: 10;
+      }
+      #print-report .pr-running--header {
+        top: 4mm;
+        bottom: auto;
+        height: 24mm;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 18px;
+        gap: 16px;
         border-bottom: 1.5px solid #691c32;
-        padding-bottom: 10px;
-        margin-bottom: 14px;
+        padding-bottom: 4mm;
+      }
+      #print-report .pr-running--footer {
+        bottom: 4mm;
+        top: auto;
+        height: 26mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       #print-report .pr-header-text {
         flex: 1;
@@ -1852,12 +1869,11 @@
       }
       #print-report .pr-header-logo {
         flex-shrink: 0;
-        max-width: 440px;
-        max-height: 140px;
+        max-height: 22mm;
+        max-width: 60mm;
         height: auto;
         width: auto;
         object-fit: contain;
-        align-self: center;
       }
       #print-report .pr-eyebrow {
         font-size: 7.5pt;
@@ -2064,125 +2080,145 @@
         border: 1px solid #c8a300;
       }
 
-      /* Línea del tiempo (versión imprimible, tipo Gantt horizontal compacto) */
-      #print-report .pr-tl-empty {
+      /* Calendario de dos meses (mes anterior + mes actual) — sustituye
+         a la antigua "línea del tiempo" Gantt. Cada celda = un día;
+         dentro de cada celda se muestran las etiquetas (Conv, Visita,
+         Junta, Apert, Fallo) de los hitos que caen en ese día,
+         coloreadas con la paleta de cada licitación. */
+      #print-report .pr-cal-empty {
         text-align: center;
         color: #888;
         font-style: italic;
-        padding: 6px;
+        padding: 8px;
         font-size: 8.5pt;
       }
-      #print-report .pr-tl {
+      #print-report .pr-cal-row {
         display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 8px 12px;
-        align-items: center;
+        grid-template-columns: 1fr 1fr;
+        gap: 6mm;
+      }
+      #print-report .pr-cal-month {
+        border: 1px solid #d8d8d8;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #fff;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      #print-report .pr-cal-title {
+        background: #691c32;
+        color: #fff;
+        text-align: center;
         font-size: 8.5pt;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        padding: 4px 0;
+        text-transform: uppercase;
       }
-      #print-report .pr-tl-id {
-        font-family: ui-monospace, Menlo, Consolas, monospace;
+      #print-report .pr-cal-title.is-current::after {
+        content: ' · vigente';
         font-weight: 700;
-        font-size: 8pt;
-        color: #1a1a1a;
-        white-space: nowrap;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+        opacity: .85;
+        letter-spacing: .8px;
       }
-      #print-report .pr-tl-id::before {
-        content: '';
-        width: 8px; height: 8px; border-radius: 2px;
-        background: var(--row-color, #c9922a);
-        border: 1px solid rgba(0,0,0,.3);
-      }
-      #print-report .pr-tl-steps {
-        position: relative;
-        display: flex;
-        align-items: flex-start;
-        padding-top: 4px;
-      }
-      #print-report .pr-tl-steps::before {
-        content: '';
-        position: absolute;
-        left: calc(50% / var(--n, 1));
-        right: calc(50% / var(--n, 1));
-        top: 9px;
-        height: 2px;
+      #print-report .pr-cal-wdrow {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
         background: #f0e5cf;
-        border-radius: 1px;
-        z-index: 0;
+        border-bottom: 1px solid #e5d6b3;
       }
-      #print-report .pr-tl-step {
-        flex: 1;
-        min-width: 0;
+      #print-report .pr-cal-wd {
+        text-align: center;
+        font-size: 6.5pt;
+        font-weight: 800;
+        color: #6b5300;
+        letter-spacing: .8px;
+        padding: 3px 0;
+      }
+      #print-report .pr-cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        background: #e8e8e8;
+        gap: 1px;
+      }
+      #print-report .pr-cal-day {
+        background: #fff;
+        min-height: 48px;
+        padding: 2px 3px;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 2px;
-        position: relative;
-        z-index: 1;
+        gap: 1px;
+        overflow: hidden;
       }
-      #print-report .pr-tl-step-dot {
-        width: 10px; height: 10px;
-        border-radius: 50%;
-        background: var(--row-color, #c9922a);
-        border: 1.5px solid #fff;
-        box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+      #print-report .pr-cal-day--empty {
+        background: #f7f7f7;
       }
-      #print-report .pr-tl-step.is-empty .pr-tl-step-dot {
-        background: #fff;
-        box-shadow: 0 0 0 1px #c8c8c8;
+      #print-report .pr-cal-day.is-today {
+        background: #fff7c2;
+        outline: 1.5px solid #c8a300;
+        outline-offset: -1.5px;
       }
-      #print-report .pr-tl-step-stage {
-        font-size: 6.5pt;
-        color: #666;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .3px;
-      }
-      #print-report .pr-tl-step-date {
-        font-family: ui-monospace, Menlo, Consolas, monospace;
-        font-size: 7.5pt;
-        color: #222;
-        white-space: nowrap;
-      }
-      #print-report .pr-tl-step.is-empty .pr-tl-step-stage,
-      #print-report .pr-tl-step.is-empty .pr-tl-step-date {
-        color: #aaa;
-      }
-      /* Tabla envolvente: el <tfoot> con display:table-footer-group hace
-         que Chrome/Edge/Firefox repitan el pie de página al final de
-         CADA hoja impresa (comportamiento tipo "footer de Word"). */
-      #print-report .pr-doc {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      #print-report .pr-doc > tbody > tr > td,
-      #print-report .pr-doc > thead > tr > td,
-      #print-report .pr-doc > tfoot > tr > td {
-        padding: 0;
-        vertical-align: top;
-      }
-      #print-report .pr-doc > thead {
-        display: table-header-group;
-      }
-      #print-report .pr-doc > tfoot {
-        display: table-footer-group;
-      }
-      #print-report .pr-footer {
-        padding: 6mm 0 2mm;
+      #print-report .pr-cal-num {
         font-size: 7pt;
-        color: #777;
-        text-align: center;
-        border-top: 1px solid #e5e5e5;
-        break-inside: avoid;
-        page-break-inside: avoid;
+        font-weight: 800;
+        color: #555;
+        line-height: 1;
+        margin-bottom: 2px;
       }
+      #print-report .pr-cal-day.is-today .pr-cal-num {
+        color: #6b5300;
+      }
+      #print-report .pr-cal-tag {
+        display: block;
+        padding: 1px 3px;
+        border-radius: 2px;
+        font-size: 5.8pt;
+        font-weight: 800;
+        letter-spacing: .3px;
+        color: #fff;
+        background: var(--row-color, #c9922a);
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.25;
+      }
+      #print-report .pr-cal-more {
+        font-size: 6pt;
+        color: #888;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      #print-report .pr-cal-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        margin-top: 6px;
+        font-size: 7pt;
+        color: #555;
+      }
+      #print-report .pr-cal-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      #print-report .pr-cal-legend-swatch {
+        width: 8px; height: 8px;
+        border-radius: 2px;
+        background: var(--row-color, #c9922a);
+        border: 1px solid rgba(0,0,0,.25);
+      }
+      #print-report .pr-cal-legend-id {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-weight: 700;
+        color: #222;
+      }
+      /* Pie con la imagen institucional (colocado dentro del .pr-running--footer
+         que está position: fixed, así aparece en cada hoja). */
       #print-report .pr-footer-logo {
         display: block;
         max-width: 100%;
-        max-height: 28mm;
+        max-height: 22mm;
         height: auto;
         width: auto;
         margin: 0 auto;
@@ -4563,90 +4599,137 @@
 
       const listHtml = `<div class="pr-list">${itemsHtml}</div>`;
 
-      // ─── Línea del tiempo (etapas equidistantes, sin escala temporal) ───
-      // En el reporte no interesa la separación real entre hitos, solo
-      // listar las etapas conocidas de cada licitación una junto a otra.
-      let timelineHtml;
-      const itemsForTl = items.filter(it => {
-        if (it.fechaStr) return true;
-        return (it.hitos || []).some(h => STAGES.includes(h.stage));
-      });
-      if (!itemsForTl.length) {
-        timelineHtml = `<div class="pr-tl-empty">Sin fechas registradas</div>`;
-      } else {
-        const rowsTl = itemsForTl.map(it => {
-          const hitosByStage = {};
-          (it.hitos || []).forEach(h => { hitosByStage[h.stage] = h; });
-          if (!hitosByStage['Fallo'] && it.fechaStr) {
-            hitosByStage['Fallo'] = { stage: 'Fallo', rawValue: it.fechaStr };
-          }
-          const stepsHtml = STAGES.map(stage => {
-            const value = hitosByStage[stage]?.rawValue || '';
-            const has = !!value;
-            return `
-              <div class="pr-tl-step${has ? '' : ' is-empty'}">
-                <div class="pr-tl-step-dot" style="--row-color:${it.color}"></div>
-                <div class="pr-tl-step-stage">${escapeHtml(stage.toUpperCase())}</div>
-                <div class="pr-tl-step-date">${has ? escapeHtml(value) : '—'}</div>
-              </div>
-            `;
-          }).join('');
-          return `
-            <div class="pr-tl-id" style="--row-color:${it.color}">${escapeHtml(shortId(it.id))}</div>
-            <div class="pr-tl-steps" style="--n:${STAGES.length}">${stepsHtml}</div>
-          `;
-        }).join('');
+      // ─── Calendario de dos meses (mes anterior + mes actual) ───
+      // Reemplaza la antigua "línea del tiempo". Para hoy = 06/05/2026
+      // se proyecta abril 2026 + mayo 2026: cada celda = un día y dentro
+      // se muestran etiquetas con la abreviatura de la etapa que cae
+      // ese día, coloreadas con la paleta de cada licitación.
+      const calendarHtml = buildTwoMonthCalendar(items, today);
 
-        timelineHtml = `<div class="pr-tl">${rowsTl}</div>`;
+      // Estructura sin tabla: el encabezado y el pie son hijos directos
+      // de #print-report con `position: fixed`, así los navegadores los
+      // repintan en CADA hoja impresa pegados al borde superior/inferior
+      // del papel — comportamiento real tipo "header/footer de Word".
+      // El @page reserva 32mm/34mm de margen para que no se traslapen.
+      printReport.innerHTML = `
+        <div class="pr-running pr-running--header">
+          <div class="pr-header-text">
+            <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
+            <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
+            <div class="pr-sub">${escapeHtml(sub)}</div>
+            <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
+          </div>
+          <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
+        </div>
+
+        <div class="pr-running pr-running--footer">
+          <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+        </div>
+
+        <div class="pr-section">
+          <div class="pr-section-title">Procedimientos de contratación</div>
+          ${listHtml}
+        </div>
+
+        <div class="pr-section">
+          <div class="pr-section-title">Proyección · ${MESES[(today.getMonth() + 11) % 12]} y ${MESES[today.getMonth()]} ${today.getFullYear()}</div>
+          ${calendarHtml}
+        </div>
+      `;
+    }
+
+    /* Construye el HTML del calendario de dos meses (mes anterior +
+       mes actual). Cada licitación aporta sus hitos al día que
+       corresponde dentro de la ventana; los hitos fuera del rango se
+       ignoran (se siguen viendo en la sección "Procedimientos"). */
+    function buildTwoMonthCalendar(items, today) {
+      const cur  = new Date(today.getFullYear(), today.getMonth(), 1);
+      const prev = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const months = [
+        { date: prev, isCurrent: false },
+        { date: cur,  isCurrent: true  },
+      ];
+
+      // Indexa hitos por clave YYYY-MM-DD para lookup O(1) por día.
+      const dayIndex = new Map();
+      const idsInRange = new Set();
+      const rangeStart = new Date(prev.getFullYear(), prev.getMonth(), 1).getTime();
+      const rangeEnd   = new Date(cur.getFullYear(),  cur.getMonth() + 1, 1).getTime();
+      items.forEach(it => {
+        const hitos = (it.hitos || []).slice();
+        if (it.fechaStr && !hitos.find(h => h.stage === 'Fallo')) {
+          hitos.push({ stage: 'Fallo', rawValue: it.fechaStr });
+        }
+        hitos.forEach(h => {
+          const dm = String(h.rawValue).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (!dm) return;
+          const [, d, mo, y] = dm;
+          const t = new Date(+y, +mo - 1, +d).getTime();
+          if (t < rangeStart || t >= rangeEnd) return;
+          const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          if (!dayIndex.has(key)) dayIndex.set(key, []);
+          dayIndex.get(key).push({ stage: h.stage, item: it });
+          idsInRange.add(it);
+        });
+      });
+
+      if (!dayIndex.size) {
+        return `<div class="pr-cal-empty">Sin fechas registradas para ${MESES[prev.getMonth()]}–${MESES[cur.getMonth()]} ${cur.getFullYear()}</div>`;
       }
 
-      // Estructura clásica del reporte (look de letterhead):
-      //   - .pr-header con texto a la izquierda y ATTRAPI a la derecha
-      //   - secciones de contenido
-      //   - .pr-footer con la imagen y texto institucional, position:fixed
-      //     vía CSS para que aparezca al fondo de CADA hoja al imprimir.
-      // El reporte se envuelve en un <table> con <thead> y <tfoot> para
-      // que el navegador repita automáticamente el encabezado (logo
-      // ATTRAPI) y el pie (piedepágina2026) en CADA hoja impresa
-      // (truco estándar tipo "header/footer de Word" — funciona en
-      // Chrome, Edge y Firefox).
-      printReport.innerHTML = `
-        <table class="pr-doc">
-          <thead>
-            <tr><td>
-              <div class="pr-header">
-                <div class="pr-header-text">
-                  <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
-                  <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
-                  <div class="pr-sub">${escapeHtml(sub)}</div>
-                  <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
-                </div>
-                <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
-              </div>
-            </td></tr>
-          </thead>
-          <tfoot>
-            <tr><td>
-              <div class="pr-footer">
-                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
-              </div>
-            </td></tr>
-          </tfoot>
-          <tbody>
-            <tr><td>
-              <div class="pr-section">
-                <div class="pr-section-title">Procedimientos de contratación</div>
-                ${listHtml}
-              </div>
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const wdHtml = ['L','M','X','J','V','S','D']
+        .map(d => `<div class="pr-cal-wd">${d}</div>`).join('');
 
-              <div class="pr-section">
-                <div class="pr-section-title">Línea del tiempo</div>
-                ${timelineHtml}
-              </div>
-            </td></tr>
-          </tbody>
-        </table>
-      `;
+      const monthsHtml = months.map(({ date, isCurrent }) => {
+        const y = date.getFullYear();
+        const m = date.getMonth();
+        const monthName = MESES[m].toUpperCase();
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        // JS Date.getDay(): Sun=0..Sat=6. Convertir a Mon=0..Sun=6.
+        const firstWeekday = (new Date(y, m, 1).getDay() + 6) % 7;
+
+        const cells = [];
+        for (let i = 0; i < firstWeekday; i++) cells.push(null);
+        for (let d = 1; d <= lastDay; d++) cells.push(d);
+        while (cells.length % 7 !== 0) cells.push(null);
+
+        const cellsHtml = cells.map(d => {
+          if (d === null) return `<div class="pr-cal-day pr-cal-day--empty"></div>`;
+          const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const ms = dayIndex.get(key) || [];
+          const tagsHtml = ms.slice(0, 3).map(x => {
+            const label = STAGE_SHORT_LABEL[x.stage] || x.stage;
+            return `<div class="pr-cal-tag" style="--row-color:${x.item.color}" title="${escapeHtml(shortId(x.item.id))} · ${escapeHtml(x.stage)}">${escapeHtml(label)}</div>`;
+          }).join('');
+          const moreHtml = ms.length > 3 ? `<div class="pr-cal-more">+${ms.length - 3}</div>` : '';
+          const isToday = key === todayKey;
+          return `<div class="pr-cal-day${isToday ? ' is-today' : ''}">
+            <div class="pr-cal-num">${d}</div>${tagsHtml}${moreHtml}
+          </div>`;
+        }).join('');
+
+        return `<div class="pr-cal-month">
+          <div class="pr-cal-title${isCurrent ? ' is-current' : ''}">${monthName} ${y}</div>
+          <div class="pr-cal-wdrow">${wdHtml}</div>
+          <div class="pr-cal-grid">${cellsHtml}</div>
+        </div>`;
+      }).join('');
+
+      // Leyenda con las licitaciones que tienen al menos un hito en el
+      // rango (para asociar color → ID sin tener que ir a la lista).
+      const legendHtml = idsInRange.size
+        ? `<div class="pr-cal-legend">${
+            Array.from(idsInRange).map(it =>
+              `<span class="pr-cal-legend-item">
+                 <span class="pr-cal-legend-swatch" style="--row-color:${it.color}"></span>
+                 <span class="pr-cal-legend-id">${escapeHtml(shortId(it.id))}</span>
+               </span>`
+            ).join('')
+          }</div>`
+        : '';
+
+      return `<div class="pr-cal-row">${monthsHtml}</div>${legendHtml}`;
     }
 
     async function generateReport() {
