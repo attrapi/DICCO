@@ -2080,138 +2080,111 @@
         border: 1px solid #c8a300;
       }
 
-      /* Calendario de dos meses (mes anterior + mes actual) — sustituye
-         a la antigua "línea del tiempo" Gantt. Cada celda = un día;
-         dentro de cada celda se muestran las etiquetas (Conv, Visita,
-         Junta, Apert, Fallo) de los hitos que caen en ese día,
-         coloreadas con la paleta de cada licitación. */
-      #print-report .pr-cal-empty {
+      /* Mini-línea del tiempo de DOS meses (mes anterior + mes vigente).
+         Misma estética compacta que la tira Gantt original (una fila por
+         licitación con un strip horizontal), pero la escala ya no es
+         "etapas equidistantes" sino tiempo real proyectado a 2 meses.
+         Los hitos se posicionan sobre el strip por su día real
+         (left: % calculado contra los días del mes en cuestión). */
+      #print-report .pr-mtl-empty {
         text-align: center;
         color: #888;
         font-style: italic;
         padding: 8px;
         font-size: 8.5pt;
       }
-      #print-report .pr-cal-row {
+      #print-report .pr-mtl {
+        display: grid;
+        grid-template-columns: 95px 1fr;
+        gap: 3px 10px;
+        align-items: center;
+        font-size: 7.5pt;
+      }
+      #print-report .pr-mtl-months {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 6mm;
+        gap: 2px;
       }
-      #print-report .pr-cal-month {
-        border: 1px solid #d8d8d8;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #fff;
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-      #print-report .pr-cal-title {
-        background: #691c32;
-        color: #fff;
+      #print-report .pr-mtl-month {
         text-align: center;
-        font-size: 8.5pt;
         font-weight: 800;
-        letter-spacing: 1.5px;
-        padding: 4px 0;
-        text-transform: uppercase;
-      }
-      #print-report .pr-cal-title.is-current::after {
-        content: ' · vigente';
-        font-weight: 700;
-        opacity: .85;
-        letter-spacing: .8px;
-      }
-      #print-report .pr-cal-wdrow {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        font-size: 7pt;
+        letter-spacing: 1px;
+        color: #6b5300;
         background: #f0e5cf;
-        border-bottom: 1px solid #e5d6b3;
-      }
-      #print-report .pr-cal-wd {
-        text-align: center;
-        font-size: 6.5pt;
-        font-weight: 800;
-        color: #6b5300;
-        letter-spacing: .8px;
         padding: 3px 0;
-      }
-      #print-report .pr-cal-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        background: #e8e8e8;
-        gap: 1px;
-      }
-      #print-report .pr-cal-day {
-        background: #fff;
-        min-height: 48px;
-        padding: 2px 3px;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-        overflow: hidden;
-      }
-      #print-report .pr-cal-day--empty {
-        background: #f7f7f7;
-      }
-      #print-report .pr-cal-day.is-today {
-        background: #fff7c2;
-        outline: 1.5px solid #c8a300;
-        outline-offset: -1.5px;
-      }
-      #print-report .pr-cal-num {
-        font-size: 7pt;
-        font-weight: 800;
-        color: #555;
-        line-height: 1;
-        margin-bottom: 2px;
-      }
-      #print-report .pr-cal-day.is-today .pr-cal-num {
-        color: #6b5300;
-      }
-      #print-report .pr-cal-tag {
-        display: block;
-        padding: 1px 3px;
-        border-radius: 2px;
-        font-size: 5.8pt;
-        font-weight: 800;
-        letter-spacing: .3px;
-        color: #fff;
-        background: var(--row-color, #c9922a);
+        border-radius: 3px 3px 0 0;
         text-transform: uppercase;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.25;
       }
-      #print-report .pr-cal-more {
-        font-size: 6pt;
-        color: #888;
+      #print-report .pr-mtl-month.is-current {
+        background: #e7c46a;
+        color: #4a3700;
+      }
+      #print-report .pr-mtl-id {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
         font-weight: 700;
-        line-height: 1.2;
-      }
-      #print-report .pr-cal-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 10px;
-        margin-top: 6px;
         font-size: 7pt;
-        color: #555;
-      }
-      #print-report .pr-cal-legend-item {
+        color: #1a1a1a;
+        white-space: nowrap;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
-      #print-report .pr-cal-legend-swatch {
+      #print-report .pr-mtl-id::before {
+        content: '';
         width: 8px; height: 8px;
         border-radius: 2px;
         background: var(--row-color, #c9922a);
-        border: 1px solid rgba(0,0,0,.25);
+        border: 1px solid rgba(0,0,0,.3);
+        flex-shrink: 0;
       }
-      #print-report .pr-cal-legend-id {
-        font-family: ui-monospace, Menlo, Consolas, monospace;
-        font-weight: 700;
-        color: #222;
+      #print-report .pr-mtl-strip {
+        position: relative;
+        height: 18px;
+        background: #fafafa;
+        border: 1px solid #e5e5e5;
+        border-radius: 2px;
+      }
+      #print-report .pr-mtl-strip::before {
+        /* divisor entre los dos meses */
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0; bottom: 0;
+        width: 1px;
+        background: #d0d0d0;
+        z-index: 0;
+      }
+      #print-report .pr-mtl-tag {
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--row-color, #c9922a);
+        color: #fff;
+        border-radius: 3px;
+        padding: 1px 4px;
+        font-size: 5.8pt;
+        font-weight: 800;
+        line-height: 1.1;
+        white-space: nowrap;
+        text-align: center;
+        letter-spacing: .3px;
+        z-index: 1;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.22);
+      }
+      #print-report .pr-mtl-tag.is-today {
+        background: #fde047 !important;
+        color: #5a3d00 !important;
+        box-shadow: 0 0 0 1.2px #c8a300;
+      }
+      #print-report .pr-mtl-today-marker {
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 1.5px;
+        background: #c8a300;
+        z-index: 0;
       }
       /* Pie con la imagen institucional (colocado dentro del .pr-running--footer
          que está position: fixed, así aparece en cada hoja). */
@@ -4599,12 +4572,11 @@
 
       const listHtml = `<div class="pr-list">${itemsHtml}</div>`;
 
-      // ─── Calendario de dos meses (mes anterior + mes actual) ───
-      // Reemplaza la antigua "línea del tiempo". Para hoy = 06/05/2026
-      // se proyecta abril 2026 + mayo 2026: cada celda = un día y dentro
-      // se muestran etiquetas con la abreviatura de la etapa que cae
-      // ese día, coloreadas con la paleta de cada licitación.
-      const calendarHtml = buildTwoMonthCalendar(items, today);
+      // ─── Mini-línea del tiempo de dos meses (mes anterior + vigente) ───
+      // Una fila por licitación con un strip horizontal compacto cuya
+      // escala cubre [mes anterior, mes vigente]. Los hitos se ubican
+      // a la posición real del día sobre la tira (no equidistantes).
+      const calendarHtml = buildTwoMonthMiniTimeline(items, today);
 
       // Estructura sin tabla: el encabezado y el pie son hijos directos
       // de #print-report con `position: fixed`, así los navegadores los
@@ -4638,98 +4610,86 @@
       `;
     }
 
-    /* Construye el HTML del calendario de dos meses (mes anterior +
-       mes actual). Cada licitación aporta sus hitos al día que
-       corresponde dentro de la ventana; los hitos fuera del rango se
-       ignoran (se siguen viendo en la sección "Procedimientos"). */
-    function buildTwoMonthCalendar(items, today) {
+    /* Construye la mini línea del tiempo de dos meses (mes anterior +
+       mes vigente). Una fila por licitación con un strip horizontal
+       cuya escala = [mes anterior, mes vigente]. Cada hito se posiciona
+       sobre el strip por su día real (left: % calculado), no
+       equidistante. Los hitos fuera del rango se descartan (siguen
+       visibles en la sección "Procedimientos"). */
+    function buildTwoMonthMiniTimeline(items, today) {
       const cur  = new Date(today.getFullYear(), today.getMonth(), 1);
       const prev = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const months = [
-        { date: prev, isCurrent: false },
-        { date: cur,  isCurrent: true  },
-      ];
+      const prevDays = new Date(prev.getFullYear(), prev.getMonth() + 1, 0).getDate();
+      const curDays  = new Date(cur.getFullYear(),  cur.getMonth() + 1,  0).getDate();
+      const rangeStart = prev.getTime();
+      const rangeEnd   = new Date(cur.getFullYear(), cur.getMonth() + 1, 1).getTime();
 
-      // Indexa hitos por clave YYYY-MM-DD para lookup O(1) por día.
-      const dayIndex = new Map();
-      const idsInRange = new Set();
-      const rangeStart = new Date(prev.getFullYear(), prev.getMonth(), 1).getTime();
-      const rangeEnd   = new Date(cur.getFullYear(),  cur.getMonth() + 1, 1).getTime();
-      items.forEach(it => {
+      // Para cada licitación, recolectar hitos dentro de la ventana y
+      // calcular su posición horizontal (%) sobre el strip de 2 meses.
+      const rows = items.map(it => {
         const hitos = (it.hitos || []).slice();
         if (it.fechaStr && !hitos.find(h => h.stage === 'Fallo')) {
           hitos.push({ stage: 'Fallo', rawValue: it.fechaStr });
         }
+        const inRange = [];
         hitos.forEach(h => {
           const dm = String(h.rawValue).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
           if (!dm) return;
           const [, d, mo, y] = dm;
           const t = new Date(+y, +mo - 1, +d).getTime();
           if (t < rangeStart || t >= rangeEnd) return;
-          const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          if (!dayIndex.has(key)) dayIndex.set(key, []);
-          dayIndex.get(key).push({ stage: h.stage, item: it });
-          idsInRange.add(it);
+          const isPrev = (+mo - 1) === prev.getMonth() && (+y) === prev.getFullYear();
+          const totalDays = isPrev ? prevDays : curDays;
+          const sectionStart = isPrev ? 0 : 50;
+          // Centra el día en su "celda" virtual: ((d - 0.5) / totalDays) * 50%.
+          const pct = sectionStart + ((+d - 0.5) / totalDays) * 50;
+          inRange.push({ stage: h.stage, day: +d, month: +mo - 1, year: +y, pct, rawValue: h.rawValue });
         });
-      });
+        // Orden cronológico para que las pastillas queden en orden.
+        inRange.sort((a, b) => (a.year - b.year) || (a.month - b.month) || (a.day - b.day));
+        return { item: it, hitos: inRange };
+      }).filter(r => r.hitos.length > 0);
 
-      if (!dayIndex.size) {
-        return `<div class="pr-cal-empty">Sin fechas registradas para ${MESES[prev.getMonth()]}–${MESES[cur.getMonth()]} ${cur.getFullYear()}</div>`;
+      if (!rows.length) {
+        return `<div class="pr-mtl-empty">Sin fechas registradas en ${MESES[prev.getMonth()]}–${MESES[cur.getMonth()]} ${cur.getFullYear()}</div>`;
       }
 
-      const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-      const wdHtml = ['L','M','X','J','V','S','D']
-        .map(d => `<div class="pr-cal-wd">${d}</div>`).join('');
+      // Marker vertical de "HOY" sobre cada strip (si HOY cae en la
+      // ventana de 2 meses, lo cual es siempre cierto en este reporte).
+      const todayPct = (() => {
+        const isPrev = today.getMonth() === prev.getMonth() && today.getFullYear() === prev.getFullYear();
+        const totalDays = isPrev ? prevDays : curDays;
+        const sectionStart = isPrev ? 0 : 50;
+        return sectionStart + ((today.getDate() - 0.5) / totalDays) * 50;
+      })();
+      const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
-      const monthsHtml = months.map(({ date, isCurrent }) => {
-        const y = date.getFullYear();
-        const m = date.getMonth();
-        const monthName = MESES[m].toUpperCase();
-        const lastDay = new Date(y, m + 1, 0).getDate();
-        // JS Date.getDay(): Sun=0..Sat=6. Convertir a Mon=0..Sun=6.
-        const firstWeekday = (new Date(y, m, 1).getDay() + 6) % 7;
-
-        const cells = [];
-        for (let i = 0; i < firstWeekday; i++) cells.push(null);
-        for (let d = 1; d <= lastDay; d++) cells.push(d);
-        while (cells.length % 7 !== 0) cells.push(null);
-
-        const cellsHtml = cells.map(d => {
-          if (d === null) return `<div class="pr-cal-day pr-cal-day--empty"></div>`;
-          const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const ms = dayIndex.get(key) || [];
-          const tagsHtml = ms.slice(0, 3).map(x => {
-            const label = STAGE_SHORT_LABEL[x.stage] || x.stage;
-            return `<div class="pr-cal-tag" style="--row-color:${x.item.color}" title="${escapeHtml(shortId(x.item.id))} · ${escapeHtml(x.stage)}">${escapeHtml(label)}</div>`;
-          }).join('');
-          const moreHtml = ms.length > 3 ? `<div class="pr-cal-more">+${ms.length - 3}</div>` : '';
-          const isToday = key === todayKey;
-          return `<div class="pr-cal-day${isToday ? ' is-today' : ''}">
-            <div class="pr-cal-num">${d}</div>${tagsHtml}${moreHtml}
-          </div>`;
+      const rowsHtml = rows.map(r => {
+        const tagsHtml = r.hitos.map(h => {
+          const isToday = `${h.year}-${h.month}-${h.day}` === todayKey;
+          const label = STAGE_SHORT_LABEL[h.stage] || h.stage;
+          const dayStr = String(h.day).padStart(2, '0');
+          return `<div class="pr-mtl-tag${isToday ? ' is-today' : ''}" style="left:${h.pct.toFixed(2)}%" title="${escapeHtml(shortId(r.item.id))} · ${escapeHtml(h.stage)} · ${escapeHtml(h.rawValue)}">${dayStr} ${escapeHtml(label.toUpperCase())}</div>`;
         }).join('');
-
-        return `<div class="pr-cal-month">
-          <div class="pr-cal-title${isCurrent ? ' is-current' : ''}">${monthName} ${y}</div>
-          <div class="pr-cal-wdrow">${wdHtml}</div>
-          <div class="pr-cal-grid">${cellsHtml}</div>
-        </div>`;
+        return `
+          <div class="pr-mtl-id" style="--row-color:${r.item.color}">${escapeHtml(shortId(r.item.id))}</div>
+          <div class="pr-mtl-strip" style="--row-color:${r.item.color}">
+            <div class="pr-mtl-today-marker" style="left:${todayPct.toFixed(2)}%"></div>
+            ${tagsHtml}
+          </div>
+        `;
       }).join('');
 
-      // Leyenda con las licitaciones que tienen al menos un hito en el
-      // rango (para asociar color → ID sin tener que ir a la lista).
-      const legendHtml = idsInRange.size
-        ? `<div class="pr-cal-legend">${
-            Array.from(idsInRange).map(it =>
-              `<span class="pr-cal-legend-item">
-                 <span class="pr-cal-legend-swatch" style="--row-color:${it.color}"></span>
-                 <span class="pr-cal-legend-id">${escapeHtml(shortId(it.id))}</span>
-               </span>`
-            ).join('')
-          }</div>`
-        : '';
-
-      return `<div class="pr-cal-row">${monthsHtml}</div>${legendHtml}`;
+      return `
+        <div class="pr-mtl">
+          <div></div>
+          <div class="pr-mtl-months">
+            <div class="pr-mtl-month">${escapeHtml(MESES[prev.getMonth()].toUpperCase())} ${prev.getFullYear()}</div>
+            <div class="pr-mtl-month is-current">${escapeHtml(MESES[cur.getMonth()].toUpperCase())} ${cur.getFullYear()}</div>
+          </div>
+          ${rowsHtml}
+        </div>
+      `;
     }
 
     async function generateReport() {
