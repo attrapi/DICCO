@@ -1847,60 +1847,80 @@
       #print-report .pr-running--header {
         top: 4mm;
         bottom: auto;
-        height: 24mm;
+        height: 26mm;
+        box-sizing: border-box;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 12px;
         border-bottom: 1.5px solid #691c32;
-        padding-bottom: 4mm;
+        padding: 1mm 0 2mm;
+        overflow: hidden;
       }
       #print-report .pr-running--footer {
         bottom: 4mm;
         top: auto;
         height: 26mm;
+        box-sizing: border-box;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       #print-report .pr-header-text {
-        flex: 1;
+        flex: 1 1 auto;
         min-width: 0;
+        overflow: hidden;
       }
       #print-report .pr-header-logo {
-        flex-shrink: 0;
+        flex: 0 0 auto;
         max-height: 22mm;
-        max-width: 60mm;
+        max-width: 50mm;
         height: auto;
         width: auto;
         object-fit: contain;
       }
+      /* Tipografía del encabezado: ajustada para caber en los ~22mm
+         útiles del .pr-running--header sin que se encimen líneas. */
       #print-report .pr-eyebrow {
-        font-size: 7.5pt;
+        font-size: 7pt;
         font-weight: 800;
-        letter-spacing: 1.8px;
+        letter-spacing: 1.6px;
         text-transform: uppercase;
         color: #c9922a;
-        margin-bottom: 6px;
+        line-height: 1.1;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       #print-report .pr-title {
-        font-size: 14pt;
+        font-size: 11pt;
         font-weight: 900;
         text-transform: uppercase;
         color: #691c32;
-        letter-spacing: .4px;
-        line-height: 1.2;
-        margin-bottom: 6px;
+        letter-spacing: .3px;
+        line-height: 1.15;
+        margin-bottom: 2px;
+        /* Si el rol es muy largo, se trunca con "…" antes de bajarse a
+           dos líneas y romper la altura reservada del encabezado. */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       #print-report .pr-sub {
-        font-size: 9pt;
+        font-size: 8pt;
         color: #555;
-        margin-bottom: 4px;
+        line-height: 1.2;
+        margin-bottom: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       #print-report .pr-meta {
-        font-size: 7.5pt;
+        font-size: 6.5pt;
         color: #888;
-        margin-top: 2px;
+        line-height: 1.15;
+        margin-top: 1px;
       }
 
       #print-report .pr-section {
@@ -2141,8 +2161,14 @@
         flex-shrink: 0;
       }
       #print-report .pr-mtl-strip {
+        --lane-h: 14px;
+        --pad: 2px;
         position: relative;
-        height: 18px;
+        /* La altura crece con el número de "carriles" necesarios para
+           que las pastillas de hitos cercanos NO se encimen. JS asigna
+           --lanes por strip y --lane por pastilla. */
+        height: calc(var(--lanes, 1) * var(--lane-h) + var(--pad) * 2);
+        min-height: 18px;
         background: #fafafa;
         border: 1px solid #e5e5e5;
         border-radius: 2px;
@@ -2159,7 +2185,8 @@
       }
       #print-report .pr-mtl-tag {
         position: absolute;
-        top: 50%;
+        /* Centro vertical = padding + (carril + 0.5) * alto-de-carril */
+        top: calc(var(--pad) + (var(--lane, 0) + 0.5) * var(--lane-h));
         transform: translate(-50%, -50%);
         background: var(--row-color, #c9922a);
         color: #fff;
@@ -4647,7 +4674,24 @@
         });
         // Orden cronológico para que las pastillas queden en orden.
         inRange.sort((a, b) => (a.year - b.year) || (a.month - b.month) || (a.day - b.day));
-        return { item: it, hitos: inRange };
+
+        // Asignación greedy de carriles: si dos pastillas caen a menos
+        // de PILL_W_PCT% de distancia (ancho aproximado de una pastilla
+        // sobre el strip) chocarían visualmente, así que la segunda se
+        // baja al siguiente carril libre. La altura del strip crece
+        // automáticamente con el número de carriles vía CSS var.
+        const PILL_W_PCT = 8;
+        const laneEnds = []; // pct hasta donde llega la última pastilla colocada en cada carril
+        inRange.forEach(h => {
+          const left  = h.pct - PILL_W_PCT / 2;
+          const right = h.pct + PILL_W_PCT / 2;
+          let lane = laneEnds.findIndex(end => end <= left);
+          if (lane === -1) lane = laneEnds.length;
+          laneEnds[lane] = right;
+          h.lane = lane;
+        });
+        const lanes = Math.max(1, laneEnds.length);
+        return { item: it, hitos: inRange, lanes };
       }).filter(r => r.hitos.length > 0);
 
       if (!rows.length) {
@@ -4669,11 +4713,11 @@
           const isToday = `${h.year}-${h.month}-${h.day}` === todayKey;
           const label = STAGE_SHORT_LABEL[h.stage] || h.stage;
           const dayStr = String(h.day).padStart(2, '0');
-          return `<div class="pr-mtl-tag${isToday ? ' is-today' : ''}" style="left:${h.pct.toFixed(2)}%" title="${escapeHtml(shortId(r.item.id))} · ${escapeHtml(h.stage)} · ${escapeHtml(h.rawValue)}">${dayStr} ${escapeHtml(label.toUpperCase())}</div>`;
+          return `<div class="pr-mtl-tag${isToday ? ' is-today' : ''}" style="left:${h.pct.toFixed(2)}%; --lane:${h.lane}" title="${escapeHtml(shortId(r.item.id))} · ${escapeHtml(h.stage)} · ${escapeHtml(h.rawValue)}">${dayStr} ${escapeHtml(label.toUpperCase())}</div>`;
         }).join('');
         return `
           <div class="pr-mtl-id" style="--row-color:${r.item.color}">${escapeHtml(shortId(r.item.id))}</div>
-          <div class="pr-mtl-strip" style="--row-color:${r.item.color}">
+          <div class="pr-mtl-strip" style="--row-color:${r.item.color}; --lanes:${r.lanes}">
             <div class="pr-mtl-today-marker" style="left:${todayPct.toFixed(2)}%"></div>
             ${tagsHtml}
           </div>
