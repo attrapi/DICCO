@@ -1806,13 +1806,12 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      /* @page margin: el margen superior reserva espacio para el
-         encabezado ATTRAPI y el inferior para el pie con la imagen
-         "piedepágina2026", ambos posicionados con `position: fixed`
-         dentro de #print-report (comportamiento tipo Word/Office:
-         encabezado y pie pegados arriba/abajo de TODAS las hojas,
-         no solo donde termina el contenido). */
-      @page { size: A4; margin: 32mm 14mm 34mm 14mm; }
+      /* @page margin: dejamos margen razonable; el encabezado y el pie
+         van dentro de un <table class="pr-doc"> con <thead> y <tfoot>
+         y display:table-header-group/table-footer-group, lo que los
+         hace repetirse automáticamente en CADA hoja impresa
+         (comportamiento tipo Word — Chrome/Edge/Firefox). */
+      @page { size: A4; margin: 14mm; }
 
       html, body {
         background: #fff !important;
@@ -1832,39 +1831,45 @@
         line-height: 1.3;
         box-sizing: border-box;
       }
-      /* Encabezado y pie "running" (position: fixed): los navegadores
-         repintan los elementos position:fixed en CADA hoja impresa,
-         siempre en la misma posición relativa al papel. Los anclamos a
-         top:0 / bottom:0; el @page margin reserva el alto suficiente
-         para que el contenido NO se traslape con ellos. */
-      #print-report .pr-running {
-        position: fixed;
-        left: 14mm;
-        right: 14mm;
-        background: #fff;
-        z-index: 10;
+      /* Tabla envolvente: los <thead> y <tfoot> con
+         display:table-header/footer-group hacen que Chrome/Edge/Firefox
+         repitan encabezado y pie en CADA hoja impresa, dentro del flujo
+         del cuerpo (sin position: fixed, así no encima contenido). */
+      #print-report .pr-doc {
+        width: 100%;
+        border-collapse: collapse;
       }
-      #print-report .pr-running--header {
-        top: 4mm;
-        bottom: auto;
-        height: 26mm;
-        box-sizing: border-box;
+      #print-report .pr-doc > thead { display: table-header-group; }
+      #print-report .pr-doc > tfoot { display: table-footer-group; }
+      #print-report .pr-doc > thead > tr > td,
+      #print-report .pr-doc > tbody > tr > td,
+      #print-report .pr-doc > tfoot > tr > td {
+        padding: 0;
+        vertical-align: top;
+      }
+      #print-report .pr-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
         border-bottom: 1.5px solid #691c32;
-        padding: 1mm 0 2mm;
-        overflow: hidden;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
       }
-      #print-report .pr-running--footer {
-        bottom: 4mm;
-        top: auto;
-        height: 26mm;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      #print-report .pr-footer {
+        padding-top: 6mm;
+        text-align: center;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      #print-report .pr-footer-logo {
+        display: block;
+        max-width: 100%;
+        max-height: 22mm;
+        height: auto;
+        width: auto;
+        margin: 0 auto;
+        object-fit: contain;
       }
       #print-report .pr-header-text {
         flex: 1 1 auto;
@@ -1879,8 +1884,8 @@
         width: auto;
         object-fit: contain;
       }
-      /* Tipografía del encabezado: ajustada para caber en los ~22mm
-         útiles del .pr-running--header sin que se encimen líneas. */
+      /* Tipografía del encabezado: cada línea va con nowrap y ellipsis
+         para que un nombre largo de subdirección no rompa la maqueta. */
       #print-report .pr-eyebrow {
         font-size: 7pt;
         font-weight: 800;
@@ -2213,18 +2218,6 @@
         background: #c8a300;
         z-index: 0;
       }
-      /* Pie con la imagen institucional (colocado dentro del .pr-running--footer
-         que está position: fixed, así aparece en cada hoja). */
-      #print-report .pr-footer-logo {
-        display: block;
-        max-width: 100%;
-        max-height: 22mm;
-        height: auto;
-        width: auto;
-        margin: 0 auto;
-        object-fit: contain;
-      }
-
       /* Forzar color-adjust para que los fondos/bordes tintados salgan impresos */
       #print-report, #print-report * {
         -webkit-print-color-adjust: exact !important;
@@ -4605,35 +4598,48 @@
       // a la posición real del día sobre la tira (no equidistantes).
       const calendarHtml = buildTwoMonthMiniTimeline(items, today);
 
-      // Estructura sin tabla: el encabezado y el pie son hijos directos
-      // de #print-report con `position: fixed`, así los navegadores los
-      // repintan en CADA hoja impresa pegados al borde superior/inferior
-      // del papel — comportamiento real tipo "header/footer de Word".
-      // El @page reserva 32mm/34mm de margen para que no se traslapen.
+      // Estructura tipo "letterhead": tabla con <thead>, <tfoot> y <tbody>.
+      // El navegador repite thead/tfoot en CADA hoja impresa (truco
+      // estándar tipo Word — Chrome/Edge/Firefox lo soportan). Esta
+      // ruta es más fiable que `position: fixed`, que en print se
+      // posiciona dentro del área de contenido del @page (no contra el
+      // borde físico) y termina encimando texto sobre el cuerpo.
       printReport.innerHTML = `
-        <div class="pr-running pr-running--header">
-          <div class="pr-header-text">
-            <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
-            <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
-            <div class="pr-sub">${escapeHtml(sub)}</div>
-            <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
-          </div>
-          <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
-        </div>
+        <table class="pr-doc">
+          <thead>
+            <tr><td>
+              <div class="pr-header">
+                <div class="pr-header-text">
+                  <div class="pr-eyebrow">Reporte · ${procState.mode === 'formalizado' ? 'Formalizado' : 'En proceso'}</div>
+                  <div class="pr-title">${escapeHtml(role || 'Procesos')}</div>
+                  <div class="pr-sub">${escapeHtml(sub)}</div>
+                  <div class="pr-meta">Fecha de emisión: ${emisionStr}</div>
+                </div>
+                <img class="pr-header-logo" src="ATTRAPI.png" alt="ATTRAPI">
+              </div>
+            </td></tr>
+          </thead>
+          <tfoot>
+            <tr><td>
+              <div class="pr-footer">
+                <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+              </div>
+            </td></tr>
+          </tfoot>
+          <tbody>
+            <tr><td>
+              <div class="pr-section">
+                <div class="pr-section-title">Procedimientos de contratación</div>
+                ${listHtml}
+              </div>
 
-        <div class="pr-running pr-running--footer">
-          <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
-        </div>
-
-        <div class="pr-section">
-          <div class="pr-section-title">Procedimientos de contratación</div>
-          ${listHtml}
-        </div>
-
-        <div class="pr-section">
-          <div class="pr-section-title">Proyección · ${MESES[(today.getMonth() + 11) % 12]} y ${MESES[today.getMonth()]} ${today.getFullYear()}</div>
-          ${calendarHtml}
-        </div>
+              <div class="pr-section">
+                <div class="pr-section-title">Proyección · ${MESES[(today.getMonth() + 11) % 12]} y ${MESES[today.getMonth()]} ${today.getFullYear()}</div>
+                ${calendarHtml}
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
       `;
     }
 
@@ -4680,7 +4686,8 @@
         // sobre el strip) chocarían visualmente, así que la segunda se
         // baja al siguiente carril libre. La altura del strip crece
         // automáticamente con el número de carriles vía CSS var.
-        const PILL_W_PCT = 8;
+        // Pastilla más ancha esperada: "27 PRECON" ≈ 12% del strip.
+        const PILL_W_PCT = 13;
         const laneEnds = []; // pct hasta donde llega la última pastilla colocada en cada carril
         inRange.forEach(h => {
           const left  = h.pct - PILL_W_PCT / 2;
