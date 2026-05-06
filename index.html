@@ -4400,8 +4400,12 @@
       modalEyebrow.textContent = eyebrowLabel;
       modal.dataset.mode = mode;
       modalTitle.textContent = name || 'Procesos';
-      modalSubtitle.textContent = role
-        ? `${role} · ${items.length} ${subtitleLabel}`
+      // Versión visual: el conteo va en un segundo renglón debajo del rol.
+      // Versión plana (con " · ") se conserva en data-full para el reporte.
+      const flatSub = role ? `${role} · ${items.length} ${subtitleLabel}` : '';
+      modalSubtitle.dataset.full = flatSub;
+      modalSubtitle.innerHTML = role
+        ? `${escapeHtml(role)}<br>${items.length} ${escapeHtml(subtitleLabel)}`
         : '';
 
       procState.mode = mode;
@@ -4489,7 +4493,7 @@
 
     function buildPrintReport() {
       const role  = modalTitle.textContent.trim();
-      const sub   = modalSubtitle.textContent.trim();
+      const sub   = (modalSubtitle.dataset.full || modalSubtitle.textContent).trim();
       const items = procState.items;
       const dated = items.filter(i => i.fechaDate).sort((a,b) => a.fechaDate - b.fechaDate);
 
