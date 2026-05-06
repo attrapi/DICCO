@@ -1168,11 +1168,13 @@
       font-size: 9px;
       font-weight: 700;
       letter-spacing: .1px;
-      line-height: 1.25;
+      line-height: 1.1;
       color: rgba(255,255,255,.92);
-      white-space: nowrap;
       overflow: hidden;
       min-width: 0;
+      /* El chip va DEBAJO de la lista de detalles; le damos un poquito
+         de margen superior para separarlo visualmente del estatus. */
+      margin-top: 4px;
     }
     .cal-day-id::before {
       content: '';
@@ -1183,10 +1185,22 @@
       background: var(--id-color, #fb923c);
       border: 1px solid rgba(0,0,0,.55);
     }
+    /* ID corto en DOS renglones — línea 1 = "I-39", línea 2 = "2026". */
     .cal-day-id-text {
+      display: inline-flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .cal-day-id-l1,
+    .cal-day-id-l2 {
+      display: block;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-width: 0;
+    }
+    .cal-day-id-l2 {
+      opacity: .82;
     }
     .cal-day-id.more {
       color: rgba(255,255,255,.5);
@@ -1271,9 +1285,13 @@
       font-size: 9.5px;
       font-weight: 800;
       letter-spacing: .3px;
-      border-radius: 999px;
+      border-radius: 12px;
       text-transform: uppercase;
-      white-space: nowrap;
+      /* La pastilla puede partir el texto en varias líneas para que el
+         nombre COMPLETO de la etapa (ej. "Apertura de proposiciones")
+         se muestre sin truncarse. */
+      white-space: normal;
+      line-height: 1.2;
       box-shadow: 0 1px 3px rgba(0,0,0,.3);
       max-width: 100%;
       overflow: hidden;
@@ -1422,11 +1440,21 @@
       font-size: 10px;
       font-weight: 700;
       color: color-mix(in srgb, var(--id-color) 80%, #fff 20%);
+      /* El ID se parte en dos renglones (línea 1 = "I-39", línea 2 =
+         "2026[-objLabel]"). Cada línea va con nowrap y ellipsis para
+         que un sufijo largo no rompa el layout de la legenda. */
+      white-space: normal;
+      line-height: 1.15;
+      overflow: hidden;
+      min-width: 0;
+      flex: 1;
+    }
+    .timeline-legend-id .legend-id-l1,
+    .timeline-legend-id .legend-id-l2 {
+      display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-width: 0;
-      flex: 1;
     }
     .timeline-legend-id .legend-sep {
       margin: 0;
@@ -2171,12 +2199,10 @@
         font-weight: 700;
         font-size: 7pt;
         color: #1a1a1a;
-        white-space: nowrap;
         display: inline-flex;
         align-items: center;
         gap: 5px;
         overflow: hidden;
-        text-overflow: ellipsis;
       }
       #print-report .pr-mtl-id::before {
         content: '';
@@ -2185,6 +2211,21 @@
         background: var(--row-color, #c9922a);
         border: 1px solid rgba(0,0,0,.3);
         flex-shrink: 0;
+      }
+      /* ID en dos líneas: "I-39" arriba, "2026" abajo. */
+      #print-report .pr-mtl-id-text {
+        display: inline-flex;
+        flex-direction: column;
+        line-height: 1.1;
+        min-width: 0;
+      }
+      #print-report .pr-mtl-id-l1,
+      #print-report .pr-mtl-id-l2 {
+        display: block;
+        white-space: nowrap;
+      }
+      #print-report .pr-mtl-id-l2 {
+        opacity: .85;
       }
       #print-report .pr-mtl-strip {
         --lane-h: 14px;
@@ -3532,6 +3573,19 @@
       return m ? m[1] : id;
     }
 
+    // Divide el shortId en DOS renglones, quitando el último guion.
+    // Línea 1 = parte previa al último "-" (ej. "I-39"); línea 2 = el
+    // sufijo (típicamente el año, ej. "2026"). Se usa en las líneas
+    // del tiempo (modal y reporte) para que el ID quepa en su columna
+    // sin truncarse.
+    function shortIdLines(id) {
+      const s = shortId(id);
+      if (!s) return ['', ''];
+      const i = s.lastIndexOf('-');
+      if (i === -1) return [s, ''];
+      return [s.substring(0, i), s.substring(i + 1)];
+    }
+
     // Etiqueta ultra-corta del objeto, para usar debajo del ID en la
     // línea del tiempo y donde se necesite identificar el contrato sin
     // todo su título. Las partes se unen con guiones para encadenarse
@@ -3988,11 +4042,13 @@
 
             const chip = document.createElement('div');
             chip.className = 'cal-day-id';
+            const [idLine1, idLine2] = shortIdLines(it.id);
             const txt = document.createElement('span');
             txt.className = 'cal-day-id-text';
-            txt.textContent = shortId(it.id);
+            txt.innerHTML =
+              `<span class="cal-day-id-l1">${escapeHtml(idLine1)}</span>` +
+              `<span class="cal-day-id-l2">${escapeHtml(idLine2)}</span>`;
             chip.appendChild(txt);
-            entry.appendChild(chip);
 
             // Lista abajo de la licitación: resumen del objeto y estatus.
             // Diseñada para ir creciendo (se agregarán más ítems en el futuro).
@@ -4004,18 +4060,26 @@
             // Pastilla de estatus al lado de la palabra. Si la licitación
             // no tiene texto de estatus capturado, mostramos:
             //   • "Hoy" si la fecha del hito actual cae hoy.
-            //   • abreviatura del hito actual (Apert/Junta/Fallo…) si no.
+            //   • el NOMBRE COMPLETO de la etapa actual (Apertura de
+            //     proposiciones, Junta de aclaraciones, Fallo…) — antes
+            //     se mostraba la abreviatura (Apert/Junta/Fallo).
             //   • "Pendiente" como último recurso.
             const fallback = it.todayStage
               ? 'Hoy'
-              : (STAGE_SHORT_LABEL[it.currentStage] || 'Pendiente');
+              : (it.currentStage || 'Pendiente');
             const statusText = (it.estatusStr || '').trim() || fallback;
             lines.push(
               `<li class="is-estatus"><span class="cal-day-id-lbl">Estatus</span>` +
               `<span class="cal-day-status-pill" title="${escapeHtml(statusText)}">${escapeHtml(statusText)}</span></li>`
             );
             details.innerHTML = lines.join('');
+
+            // Orden visual del entry: PRIMERO los detalles (Objeto +
+            // Estatus) y DESPUÉS el chip con el ID corto en dos líneas.
+            // Esto deja la "pildora" abajo del estatus, como el usuario
+            // pidió.
             entry.appendChild(details);
+            entry.appendChild(chip);
 
             entry.addEventListener('mouseenter', () => setActive(i));
             entry.addEventListener('click', (e) => {
@@ -4087,13 +4151,15 @@
         row.title = item.id;
         const checked = !procState.hiddenIdxs.has(item.idx);
         const objLabel = shortObjectLabel(item.title);
+        const [idLine1, idLine2] = shortIdLines(item.id);
+        const objSuffix = objLabel ? `<span class="legend-sep">-</span><span class="legend-obj">${objLabel}</span>` : '';
         row.innerHTML = `
           <button type="button"
                   class="timeline-legend-check ${checked ? 'is-checked' : ''}"
                   aria-label="Mostrar en línea del tiempo"
                   aria-pressed="${checked}"></button>
           <span class="timeline-legend-dot"></span>
-          <span class="timeline-legend-id">${shortId(item.id)}${objLabel ? `<span class="legend-sep">-</span><span class="legend-obj">${objLabel}</span>` : ''}</span>
+          <span class="timeline-legend-id"><span class="legend-id-l1">${idLine1}</span><span class="legend-id-l2">${idLine2}${objSuffix}</span></span>
         `;
         if (!checked) row.classList.add('is-filtered-off');
 
@@ -4763,8 +4829,14 @@
           const dayStr = String(h.day).padStart(2, '0');
           return `<div class="pr-mtl-tag${isToday ? ' is-today' : ''}" style="left:${h.pct.toFixed(2)}%; --lane:${h.lane}" title="${escapeHtml(shortId(r.item.id))} · ${escapeHtml(h.stage)} · ${escapeHtml(h.rawValue)}">${dayStr} ${escapeHtml(label.toUpperCase())}</div>`;
         }).join('');
+        const [idLine1, idLine2] = shortIdLines(r.item.id);
         return `
-          <div class="pr-mtl-id" style="--row-color:${r.item.color}">${escapeHtml(shortId(r.item.id))}</div>
+          <div class="pr-mtl-id" style="--row-color:${r.item.color}">
+            <span class="pr-mtl-id-text">
+              <span class="pr-mtl-id-l1">${escapeHtml(idLine1)}</span>
+              <span class="pr-mtl-id-l2">${escapeHtml(idLine2)}</span>
+            </span>
+          </div>
           <div class="pr-mtl-strip" style="--row-color:${r.item.color}; --lanes:${r.lanes}">
             <div class="pr-mtl-today-marker" style="left:${todayPct.toFixed(2)}%"></div>
             ${tagsHtml}
