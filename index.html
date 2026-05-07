@@ -1440,9 +1440,10 @@
       font-size: 10px;
       font-weight: 700;
       color: color-mix(in srgb, var(--id-color) 80%, #fff 20%);
-      /* El ID se parte en dos renglones (línea 1 = "I-39", línea 2 =
-         "2026[-objLabel]"). Cada línea va con nowrap y ellipsis para
-         que un sufijo largo no rompa el layout de la legenda. */
+      /* Dos renglones: línea 1 = ID corto completo (ej. "I-39-2026"),
+         línea 2 = resumen del objeto (ej. "CyD-SN-SEG-15-A1"), si aplica.
+         Cada línea va con nowrap y ellipsis para que un sufijo largo
+         no rompa el layout de la legenda. */
       white-space: normal;
       line-height: 1.15;
       overflow: hidden;
@@ -4151,15 +4152,15 @@
         row.title = item.id;
         const checked = !procState.hiddenIdxs.has(item.idx);
         const objLabel = shortObjectLabel(item.title);
-        const [idLine1, idLine2] = shortIdLines(item.id);
-        const objSuffix = objLabel ? `<span class="legend-sep">-</span><span class="legend-obj">${objLabel}</span>` : '';
+        const fullShortId = shortId(item.id);
+        const objLine = objLabel ? `<span class="legend-id-l2 legend-obj">${objLabel}</span>` : '';
         row.innerHTML = `
           <button type="button"
                   class="timeline-legend-check ${checked ? 'is-checked' : ''}"
                   aria-label="Mostrar en línea del tiempo"
                   aria-pressed="${checked}"></button>
           <span class="timeline-legend-dot"></span>
-          <span class="timeline-legend-id"><span class="legend-id-l1">${idLine1}</span><span class="legend-id-l2">${idLine2}${objSuffix}</span></span>
+          <span class="timeline-legend-id"><span class="legend-id-l1">${fullShortId}</span>${objLine}</span>
         `;
         if (!checked) row.classList.add('is-filtered-off');
 
