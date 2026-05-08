@@ -1840,7 +1840,7 @@
          `position: fixed`. El <thead> repite el encabezado en cada hoja
          vía table-header-group; el <tfoot> queda como espaciador
          invisible para que el contenido no entre al área del pie. */
-      @page { size: A4; margin: 20mm 20mm 45mm 20mm; }
+      @page { size: A4; margin: 20mm 20mm 75mm 20mm; }
 
       html, body {
         background: #fff !important;
@@ -1893,7 +1893,7 @@
       /* tfoot espaciador: reserva alto al final del área de contenido
          de cada hoja, así el cuerpo no se mete sobre el pie físico. */
       #print-report .pr-footer-spacer {
-        height: 32mm;
+        height: 64mm;
       }
       /* Pie físico: position:fixed para pegarse al borde inferior del
          papel y repetirse en TODAS las hojas (Chrome/Edge/Firefox). El
@@ -1905,7 +1905,7 @@
         bottom: 8mm;
         left: 24mm;
         right: 24mm;
-        height: 28mm;
+        height: 56mm;
         text-align: center;
         background: #fff;
         z-index: 10;
@@ -1913,7 +1913,7 @@
       #print-report .pr-footer-logo {
         display: block;
         max-width: 100%;
-        max-height: 28mm;
+        max-height: 56mm;
         height: auto;
         width: auto;
         margin: 0 auto;
@@ -1924,12 +1924,12 @@
         min-width: 0;
         overflow: hidden;
       }
-      /* Logo ATTRAPI duplicado de tamaño respecto a la versión previa
-         (max-height 22mm → 44mm; max-width 50mm → 100mm). */
+      /* Logo ATTRAPI duplicado nuevamente respecto a la versión previa
+         (max-height 44mm → 88mm; max-width 100mm → 200mm). */
       #print-report .pr-header-logo {
         flex: 0 0 auto;
-        max-height: 44mm;
-        max-width: 100mm;
+        max-height: 88mm;
+        max-width: 200mm;
         height: auto;
         width: auto;
         object-fit: contain;
