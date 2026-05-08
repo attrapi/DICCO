@@ -2213,7 +2213,9 @@
         border: 1px solid rgba(0,0,0,.3);
         flex-shrink: 0;
       }
-      /* ID en dos líneas: "I-39" arriba, "2026" abajo. */
+      /* ID en dos líneas: ID corto completo arriba (ej. "I-39-2026"),
+         resumen del objeto abajo (ej. "CyD-SN-SEG-15-A1"), igual que la
+         línea del tiempo del modal. */
       #print-report .pr-mtl-id-text {
         display: inline-flex;
         flex-direction: column;
@@ -4738,7 +4740,7 @@
               </div>
 
               <div class="pr-section">
-                <div class="pr-section-title">Proyección · ${MESES[(today.getMonth() + 11) % 12]} y ${MESES[today.getMonth()]} ${today.getFullYear()}</div>
+                <div class="pr-section-title">Línea del tiempo</div>
                 ${calendarHtml}
               </div>
             </td></tr>
@@ -4830,12 +4832,13 @@
           const dayStr = String(h.day).padStart(2, '0');
           return `<div class="pr-mtl-tag${isToday ? ' is-today' : ''}" style="left:${h.pct.toFixed(2)}%; --lane:${h.lane}" title="${escapeHtml(shortId(r.item.id))} · ${escapeHtml(h.stage)} · ${escapeHtml(h.rawValue)}">${dayStr} ${escapeHtml(label.toUpperCase())}</div>`;
         }).join('');
-        const [idLine1, idLine2] = shortIdLines(r.item.id);
+        const fullShortId = shortId(r.item.id);
+        const objLabel = shortObjectLabel(r.item.title);
         return `
           <div class="pr-mtl-id" style="--row-color:${r.item.color}">
             <span class="pr-mtl-id-text">
-              <span class="pr-mtl-id-l1">${escapeHtml(idLine1)}</span>
-              <span class="pr-mtl-id-l2">${escapeHtml(idLine2)}</span>
+              <span class="pr-mtl-id-l1">${escapeHtml(fullShortId)}</span>
+              ${objLabel ? `<span class="pr-mtl-id-l2">${escapeHtml(objLabel)}</span>` : ''}
             </span>
           </div>
           <div class="pr-mtl-strip" style="--row-color:${r.item.color}; --lanes:${r.lanes}">
