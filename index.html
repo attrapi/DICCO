@@ -1901,16 +1901,20 @@
          al borde inferior del papel y lo repite en TODAS las hojas
          (Chrome/Edge/Firefox lo soportan en print). El espaciador del
          tfoot reserva alto en el flujo del cuerpo para que el contenido
-         no se traslape con la imagen. */
+         no se traslape con la imagen. flex con align-items: flex-end
+         pega la imagen al borde inferior del contenedor (sin esto, si
+         la imagen es más baja que 112mm queda flotando al centro). */
       #print-report .pr-page-footer {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         height: 112mm;
-        text-align: center;
         background: #fff;
         z-index: 10;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
       }
       #print-report .pr-footer-logo {
         display: block;
@@ -1918,7 +1922,6 @@
         max-height: 112mm;
         height: auto;
         width: auto;
-        margin: 0 auto;
         object-fit: contain;
       }
       #print-report .pr-header-text {
