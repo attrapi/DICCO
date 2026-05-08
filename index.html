@@ -1835,13 +1835,14 @@
 
     /* ── Estilos de impresión ────────────────────────────────────── */
     @media print {
-      /* @page margin: 20mm arriba/lados, 10mm abajo — solo para evitar
-         el área de hardware-margin del impresor. El <thead> repite el
-         encabezado y el <tfoot> repite el pie en CADA hoja vía
-         table-header-group / table-footer-group (mecanismo "Word"
-         confiable en Chrome/Edge/Firefox), así no se necesita reservar
-         margen para un pie con position: fixed. */
-      @page { size: A4; margin: 20mm 20mm 10mm 20mm; }
+      /* @page margin: 20mm arriba/lados, 120mm abajo — el margen
+         inferior reserva el espacio donde se pinta el pie con
+         `position: fixed; bottom: 0` para que se pegue literalmente
+         al borde inferior del papel en TODAS las hojas (estilo Word).
+         El <thead> repite el encabezado vía table-header-group y el
+         <tfoot> queda como espaciador invisible para que el cuerpo
+         no se meta sobre el pie físico. */
+      @page { size: A4; margin: 20mm 20mm 120mm 20mm; }
 
       html, body {
         background: #fff !important;
@@ -1891,10 +1892,25 @@
         padding-bottom: 4px;
         margin-bottom: 8px;
       }
-      /* Celda del tfoot: sin padding horizontal para que la imagen
-         del pie llegue edge-to-edge en cada hoja. */
-      #print-report .pr-doc > tfoot > tr > td.pr-footer-cell {
-        padding: 0;
+      /* tfoot espaciador: reserva alto al final del área de contenido
+         de cada hoja, así el cuerpo no se mete sobre el pie físico. */
+      #print-report .pr-footer-spacer {
+        height: 115mm;
+      }
+      /* Pie físico: position: fixed con bottom: 0 lo pega literalmente
+         al borde inferior del papel y lo repite en TODAS las hojas
+         (Chrome/Edge/Firefox lo soportan en print). El espaciador del
+         tfoot reserva alto en el flujo del cuerpo para que el contenido
+         no se traslape con la imagen. */
+      #print-report .pr-page-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 112mm;
+        text-align: center;
+        background: #fff;
+        z-index: 10;
       }
       #print-report .pr-footer-logo {
         display: block;
@@ -4679,14 +4695,16 @@
       // a la posición real del día sobre la tira (no equidistantes).
       const calendarHtml = buildTwoMonthMiniTimeline(items, today);
 
-      // Estructura tipo "letterhead": tabla con <thead>, <tfoot> y <tbody>.
-      // El navegador repite thead/tfoot en CADA hoja impresa (truco
-      // estándar tipo Word — Chrome/Edge/Firefox lo soportan).
+      // Estructura tipo "letterhead": tabla con <thead>, <tfoot> y <tbody>
+      // + un .pr-page-footer fuera de la tabla con position: fixed.
       // Estructura del reporte:
       //   - <thead> repite el encabezado en cada hoja (table-header-group).
-      //   - <tfoot> repite el pie con la imagen real en cada hoja
-      //     (table-footer-group). Queda anclado al final del área de
-      //     contenido en TODAS las hojas, igual que el pie de un Word.
+      //   - <tfoot> (table-footer-group) actúa como ESPACIADOR invisible
+      //     que reserva alto al final del cuerpo en cada hoja para que
+      //     el contenido NO se meta donde irá el pie físico.
+      //   - .pr-page-footer (sibling de la tabla) lleva la imagen real
+      //     y va con `position: fixed; bottom: 0` para pegarse al borde
+      //     inferior del papel en TODAS las hojas (estilo Word).
       const headerSubHtml = subRole
         ? `<div class="pr-sub">${escapeHtml(subRole)}</div>
            ${subCount ? `<div class="pr-sub pr-sub-count">${escapeHtml(subCount)}</div>` : ''}`
@@ -4708,8 +4726,8 @@
             </td></tr>
           </thead>
           <tfoot>
-            <tr><td class="pr-footer-cell">
-              <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+            <tr><td>
+              <div class="pr-footer-spacer" aria-hidden="true"></div>
             </td></tr>
           </tfoot>
           <tbody>
@@ -4726,6 +4744,10 @@
             </td></tr>
           </tbody>
         </table>
+
+        <div class="pr-page-footer">
+          <img class="pr-footer-logo" src="piedep%C3%A1gina2026.png" alt="Pie de página 2026">
+        </div>
       `;
     }
 
