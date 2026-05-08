@@ -1840,7 +1840,7 @@
          `position: fixed`. El <thead> repite el encabezado en cada hoja
          vía table-header-group; el <tfoot> queda como espaciador
          invisible para que el contenido no entre al área del pie. */
-      @page { size: A4; margin: 20mm 20mm 75mm 20mm; }
+      @page { size: A4; margin: 20mm 20mm 120mm 20mm; }
 
       html, body {
         background: #fff !important;
@@ -1893,7 +1893,7 @@
       /* tfoot espaciador: reserva alto al final del área de contenido
          de cada hoja, así el cuerpo no se mete sobre el pie físico. */
       #print-report .pr-footer-spacer {
-        height: 64mm;
+        height: 115mm;
       }
       /* Pie físico: position:fixed para pegarse al borde inferior del
          papel y repetirse en TODAS las hojas (Chrome/Edge/Firefox). El
@@ -1902,10 +1902,10 @@
          contenido no se traslape con la imagen del pie. */
       #print-report .pr-page-footer {
         position: fixed;
-        bottom: 8mm;
-        left: 24mm;
-        right: 24mm;
-        height: 56mm;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 112mm;
         text-align: center;
         background: #fff;
         z-index: 10;
@@ -1913,7 +1913,7 @@
       #print-report .pr-footer-logo {
         display: block;
         max-width: 100%;
-        max-height: 56mm;
+        max-height: 112mm;
         height: auto;
         width: auto;
         margin: 0 auto;
